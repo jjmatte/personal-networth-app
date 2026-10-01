@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	let editingId = $state<number | null>(null);
 </script>
 
 <main class="mx-auto max-w-2xl p-6">
 	<h1 class="mb-4 text-2xl font-semibold">Categories</h1>
+
+	{#if form?.error}
+		<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.error}</p>
+	{/if}
 
 	{#if data.targetsSum !== 100}
 		<p class="mb-4 rounded bg-amber-100 p-3 text-amber-900">

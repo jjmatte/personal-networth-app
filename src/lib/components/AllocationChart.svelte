@@ -9,16 +9,18 @@
 		let chart: ChartType | undefined;
 		let cancelled = false;
 
-		import('chart.js/auto').then(({ default: Chart }) => {
-			if (cancelled) return;
-			chart = new Chart(canvas, {
-				type: 'doughnut',
-				data: {
-					labels: rows.map((r) => r.name),
-					datasets: [{ data: rows.map((r) => r.actualValue) }]
-				}
-			});
-		});
+		import('chart.js/auto')
+			.then(({ default: Chart }) => {
+				if (cancelled) return;
+				chart = new Chart(canvas, {
+					type: 'doughnut',
+					data: {
+						labels: rows.map((r) => r.name),
+						datasets: [{ data: rows.map((r) => r.actualValue) }]
+					}
+				});
+			})
+			.catch(() => {});
 
 		return () => {
 			cancelled = true;

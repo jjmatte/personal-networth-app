@@ -65,6 +65,7 @@
 						name="value"
 						type="number"
 						step="0.01"
+						required
 						aria-label={`New value for ${holding.symbol}`}
 						class="w-24 rounded border px-2 py-1"
 					/>
