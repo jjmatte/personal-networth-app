@@ -34,7 +34,7 @@ export function allocation(categories: CategoryTarget[], holdings: HoldingForAll
     };
   });
   const uncatValue = valueFor(holdings, null);
-  if (uncatValue > 0) {
+  if (holdings.some((h) => h.categoryId === null)) {
     rows.push({
       categoryId: null, name: 'Uncategorized', targetWeight: 0,
       actualValue: uncatValue, actualPercent: total > 0 ? (uncatValue / total) * 100 : 0,

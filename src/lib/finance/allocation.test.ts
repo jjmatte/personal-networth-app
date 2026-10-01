@@ -31,6 +31,13 @@ describe('allocation', () => {
     expect(uncat!.actualValue).toBe(100);
   });
 
+  it('adds Uncategorized row even with zero-value null-category holding', () => {
+    const rows = allocation(cats, [{ categoryId: null, currentValue: 0 }]);
+    const uncat = rows.find((r) => r.categoryId === null);
+    expect(uncat).toBeDefined();
+    expect(uncat!.actualValue).toBe(0);
+  });
+
   it('targetsSum adds target weights', () => {
     expect(targetsSum(cats)).toBe(100);
   });
