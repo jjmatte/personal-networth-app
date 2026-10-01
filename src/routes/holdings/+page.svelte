@@ -53,7 +53,7 @@
 						<button type="button" onclick={() => (editingId = null)}>Cancel</button>
 					</form>
 				{:else}
-					<span class="w-20">{holding.symbol}</span>
+					<a class="w-20" href={`/holdings/${holding.id}`}>{holding.symbol}</a>
 					<span class="flex-1">{holding.name}</span>
 					<span class="w-32">{categoryName(holding.categoryId)}</span>
 					<span class="w-24">{money.format(holding.currentValue)}</span>
