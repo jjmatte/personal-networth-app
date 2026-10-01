@@ -9,7 +9,7 @@ export default defineConfig({
 	use: { baseURL: 'http://localhost:4173' },
 	webServer: {
 		command: 'npm run build && npm run preview',
-		url: 'http://localhost:4173',
+		url: 'http://localhost:4173/robots.txt',
 		reuseExistingServer: !process.env.CI,
 		env: { DATABASE_URL }
 	}
