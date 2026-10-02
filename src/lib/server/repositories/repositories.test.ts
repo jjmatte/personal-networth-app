@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // NOTE: these repos read `db` from ../db; for the test, set DATABASE_URL=':memory:'
 // before import and run migrations. See Step 3 for the test harness helper.
 import { makeTestDb } from './test-harness';
-import { createCategory, listCategories, deleteCategory } from './categories';
+import {
+  createCategory,
+  listCategories,
+  deleteCategory,
+  updateCategory,
+  TargetWeightError
+} from './categories';
 import { createHolding, setHoldingValue, getHolding } from './holdings';
 import { holdingHistory } from './history';
 
@@ -22,6 +28,28 @@ describe('repositories', () => {
     await setHoldingValue(h.id, 1100);
     expect((await getHolding(h.id))!.currentValue).toBe(1100);
     expect((await holdingHistory(h.id))).toHaveLength(2);
+  });
+
+  it('rejects a new category that pushes target weights over 100%', async () => {
+    await createCategory({ name: 'A', targetWeight: 70, sortOrder: 0 });
+    await expect(createCategory({ name: 'B', targetWeight: 40, sortOrder: 1 })).rejects.toThrow(
+      TargetWeightError
+    );
+  });
+
+  it('allows target weights that total exactly 100%', async () => {
+    await createCategory({ name: 'A', targetWeight: 60, sortOrder: 0 });
+    await expect(
+      createCategory({ name: 'B', targetWeight: 40, sortOrder: 1 })
+    ).resolves.toBeTruthy();
+  });
+
+  it('rejects an update that pushes target weights over 100%', async () => {
+    await createCategory({ name: 'A', targetWeight: 50, sortOrder: 0 });
+    const b = await createCategory({ name: 'B', targetWeight: 50, sortOrder: 1 });
+    await expect(
+      updateCategory(b.id, { name: 'B', targetWeight: 60, sortOrder: 1 })
+    ).rejects.toThrow(TargetWeightError);
   });
 
   it('deleting a category nulls its holdings, not deletes them', async () => {

@@ -1,6 +1,12 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { listCategories, createCategory, updateCategory, deleteCategory } from '$lib/server/repositories/categories';
+import {
+	listCategories,
+	createCategory,
+	updateCategory,
+	deleteCategory,
+	TargetWeightError
+} from '$lib/server/repositories/categories';
 import { categorySchema } from '$lib/schemas';
 import { targetsSum } from '$lib/finance/allocation';
 
@@ -16,14 +22,24 @@ export const actions: Actions = {
 	create: async ({ request }) => {
 		const parsed = categorySchema.safeParse(Object.fromEntries(await request.formData()));
 		if (!parsed.success) return fail(400, { error: 'Invalid category' });
-		await createCategory(parsed.data);
+		try {
+			await createCategory(parsed.data);
+		} catch (e) {
+			if (e instanceof TargetWeightError) return fail(400, { error: e.message });
+			throw e;
+		}
 		return { success: true };
 	},
 	update: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
 		const parsed = categorySchema.safeParse(form);
 		if (!parsed.success) return fail(400, { error: 'Invalid category' });
-		await updateCategory(Number(form.id), parsed.data);
+		try {
+			await updateCategory(Number(form.id), parsed.data);
+		} catch (e) {
+			if (e instanceof TargetWeightError) return fail(400, { error: e.message });
+			throw e;
+		}
 		return { success: true };
 	},
 	delete: async ({ request }) => {
