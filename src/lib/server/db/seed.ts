@@ -7,6 +7,11 @@ const sqlite = new Database(process.env.DATABASE_URL ?? 'data/app.db');
 sqlite.pragma('foreign_keys = ON');
 const db = drizzle(sqlite, { schema });
 
+db.delete(valueHistory).run();
+db.delete(lot).run();
+db.delete(holding).run();
+db.delete(category).run();
+
 const categories = db
   .insert(category)
   .values([
