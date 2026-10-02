@@ -36,7 +36,7 @@
 		"chart.js": "^4.4.6",
 		"chartjs-adapter-date-fns": "^3.0.0",
 		"date-fns": "^4.4.0",
-		"drizzle-orm": "^0.36.1",
+		"drizzle-orm": "^0.45.3",
 		"zod": "^3.23.8"
 	}
 }
