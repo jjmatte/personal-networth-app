@@ -1,5 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { allocation, targetsSum, distributeContribution } from './allocation';
+import { allocation, targetsSum, distributeContribution, mostUnderweight } from './allocation';
+import type { AllocationRow } from './allocation';
+
+function row(
+	categoryId: number | null,
+	name: string,
+	targetWeight: number,
+	actualPercent: number
+): AllocationRow {
+	return {
+		categoryId,
+		name,
+		targetWeight,
+		actualPercent,
+		actualValue: 0,
+		driftPercent: actualPercent - targetWeight,
+		targetValue: 0,
+		deltaValue: 0
+	};
+}
 
 const cats = [
   { id: 1, name: 'US Large Cap', targetWeight: 50 },
@@ -40,6 +59,32 @@ describe('allocation', () => {
 
   it('targetsSum adds target weights', () => {
     expect(targetsSum(cats)).toBe(100);
+  });
+
+  it('mostUnderweight ranks by relative deviation, not dollar gap', () => {
+    // Big is 5% below target; Small is 60% below target → Small wins despite a smaller dollar gap.
+    const rows = [row(1, 'Big', 80, 76), row(2, 'Small', 20, 8)];
+    expect(mostUnderweight(rows)?.categoryId).toBe(2);
+  });
+
+  it('mostUnderweight picks the least overweight when everything is at/above target', () => {
+    const rows = [row(1, 'A', 50, 60), row(2, 'B', 50, 55)];
+    expect(mostUnderweight(rows)?.categoryId).toBe(2);
+  });
+
+  it('mostUnderweight breaks ties toward the higher target weight (e.g. empty portfolio)', () => {
+    const rows = [row(1, 'A', 30, 0), row(2, 'B', 70, 0)];
+    expect(mostUnderweight(rows)?.categoryId).toBe(2);
+  });
+
+  it('mostUnderweight ignores zero-target and Uncategorized rows', () => {
+    const rows = [row(0 as number, 'Zero', 0, 0), row(2, 'Real', 50, 40), row(null, 'Uncategorized', 0, 100)];
+    expect(mostUnderweight(rows)?.categoryId).toBe(2);
+  });
+
+  it('mostUnderweight returns null when no category has a positive target', () => {
+    expect(mostUnderweight([])).toBeNull();
+    expect(mostUnderweight([row(null, 'Uncategorized', 0, 100)])).toBeNull();
   });
 
   it('distributeContribution fills the underweight category first', () => {

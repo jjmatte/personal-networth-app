@@ -48,6 +48,19 @@ export function targetsSum(categories: CategoryTarget[]): number {
   return categories.reduce((s, c) => s + c.targetWeight, 0);
 }
 
+export function mostUnderweight(rows: AllocationRow[]): AllocationRow | null {
+  const eligible = rows.filter((r) => r.targetWeight > 0);
+  if (eligible.length === 0) return null;
+  const relDrift = (r: AllocationRow) => (r.targetWeight - r.actualPercent) / r.targetWeight;
+  return eligible.reduce((best, r) => {
+    const d = relDrift(r);
+    const bd = relDrift(best);
+    if (d > bd) return r;
+    if (d === bd && r.targetWeight > best.targetWeight) return r;
+    return best;
+  });
+}
+
 export function distributeContribution(rows: AllocationRow[], amount: number): { categoryId: number | null; buy: number }[] {
   const total = rows.reduce((s, r) => s + r.actualValue, 0);
   const newTotal = total + amount;
