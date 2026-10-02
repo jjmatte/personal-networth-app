@@ -11,8 +11,8 @@
 		let chart: ChartType | undefined;
 		let cancelled = false;
 
-		import('chart.js/auto')
-			.then(({ default: Chart }) => {
+		Promise.all([import('chart.js/auto'), import('chartjs-adapter-date-fns')])
+			.then(([{ default: Chart }]) => {
 				if (cancelled) return;
 				chart = new Chart(canvas, {
 					type: 'line',
@@ -24,7 +24,7 @@
 					},
 					options: {
 						scales: {
-							x: { type: 'linear' }
+							x: { type: 'time', time: { tooltipFormat: 'PP' } }
 						}
 					}
 				});
