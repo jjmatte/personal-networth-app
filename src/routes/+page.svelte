@@ -3,6 +3,8 @@
 
 	let { data } = $props();
 
+	let contribution = $state(0);
+
 	const money = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
@@ -22,6 +24,29 @@
 		<p class="mb-4 rounded bg-yellow-100 p-3 text-yellow-900">
 			Targets sum to {data.targetsSum}%, not 100%.
 		</p>
+	{/if}
+
+	{#if data.recommended}
+		<div class="mb-6 rounded border p-4">
+			<h2 class="mb-2 font-medium">Monthly contribution</h2>
+			<div class="flex items-center gap-2">
+				<span aria-hidden="true">$</span>
+				<input
+					type="number"
+					min="0"
+					step="1"
+					aria-label="Monthly contribution"
+					bind:value={contribution}
+					class="w-32 rounded border px-2 py-1"
+				/>
+			</div>
+			{#if contribution > 0}
+				<p class="mt-2">
+					Put {money.format(contribution)} into <strong>{data.recommended.name}</strong> — it's the
+					most out of sync with its target.
+				</p>
+			{/if}
+		</div>
 	{/if}
 
 	<div class="mb-6 max-w-xs">

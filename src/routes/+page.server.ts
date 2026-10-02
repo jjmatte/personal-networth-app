@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { listCategories } from '$lib/server/repositories/categories';
 import { listHoldings } from '$lib/server/repositories/holdings';
 import { listLots } from '$lib/server/repositories/lots';
-import { allocation, targetsSum } from '$lib/finance/allocation';
+import { allocation, targetsSum, mostUnderweight } from '$lib/finance/allocation';
 import { totalValue, overallGain } from '$lib/finance/gains';
 import type { Lot } from '$lib/finance/types';
 
@@ -19,8 +19,12 @@ export const load: PageServerLoad = async () => {
 		holdingInputs.push({ currentValue: h.currentValue, lots });
 	}
 
+	const rows = allocation(cats, forAlloc);
+	const recommended = mostUnderweight(rows);
+
 	return {
-		rows: allocation(cats, forAlloc),
+		rows,
+		recommended: recommended && { categoryId: recommended.categoryId, name: recommended.name },
 		total: totalValue(holdings),
 		overallGain: overallGain(holdingInputs),
 		targetsSum: targetsSum(cats)
