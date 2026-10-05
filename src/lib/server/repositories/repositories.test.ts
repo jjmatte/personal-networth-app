@@ -9,8 +9,9 @@ import {
   updateCategory,
   TargetWeightError
 } from './categories';
-import { createHolding, setHoldingValue, getHolding } from './holdings';
+import { createHolding, setHoldingValue, getHolding, refreshHoldingValue } from './holdings';
 import { holdingHistory } from './history';
+import { valueHistory, lot } from '../db/schema';
 
 beforeEach(() => makeTestDb());
 
@@ -50,6 +51,33 @@ describe('repositories', () => {
     await expect(
       updateCategory(b.id, { name: 'B', targetWeight: 60, sortOrder: 1 })
     ).rejects.toThrow(TargetWeightError);
+  });
+
+  it('refreshHoldingValue sets value to shares x live price and overwrites only the latest snapshot', async () => {
+    const tdb = makeTestDb();
+    const cat = await createCategory({ name: 'US Large Cap', targetWeight: 40, sortOrder: 0 });
+    const h = await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: cat.id, currentValue: 0 });
+    tdb
+      .insert(valueHistory)
+      .values([
+        { holdingId: h.id, recordedAt: new Date('2025-01-01'), value: 100 },
+        { holdingId: h.id, recordedAt: new Date('2025-02-01'), value: 200 },
+        { holdingId: h.id, recordedAt: new Date('2025-03-01'), value: 300 }
+      ])
+      .run();
+    tdb
+      .insert(lot)
+      .values({ holdingId: h.id, tradeDate: new Date('2025-01-01'), shares: 2, pricePerShare: 400 })
+      .run();
+
+    const fakeFetch = (async () => ({ json: async () => ({ price: '500' }) }) as Response) as unknown as typeof fetch;
+    const result = await refreshHoldingValue(h.id, { apiKey: 'k', fetchFn: fakeFetch });
+
+    expect(result).toMatchObject({ symbol: 'VOO', shares: 2, price: 500, value: 1000 });
+    const hist = await holdingHistory(h.id);
+    expect(hist).toHaveLength(3);
+    expect(hist.map((r) => r.value)).toEqual([100, 200, 1000]);
+    expect((await getHolding(h.id))!.currentValue).toBe(1000);
   });
 
   it('deleting a category nulls its holdings, not deletes them', async () => {
