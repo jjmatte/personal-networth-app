@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AllocationChart from '$lib/components/AllocationChart.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	let contribution = $state(0);
 
@@ -10,15 +10,40 @@
 		currency: 'USD',
 		maximumFractionDigits: 0
 	});
+	const moneyPrecise = new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		minimumFractionDigits: 2
+	});
 </script>
 
 <main class="mx-auto max-w-3xl p-6">
 	<h1 class="mb-4 text-2xl font-semibold">Dashboard</h1>
 
-	<div class="mb-6 flex gap-6">
+	<div class="mb-6 flex items-center gap-6">
 		<div class="text-lg font-medium">Total value: {money.format(data.total)}</div>
 		<div class="text-lg font-medium">Overall gain: {money.format(data.overallGain)}</div>
+		<form method="POST" action="?/refreshPrices">
+			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">
+				Refresh prices
+			</button>
+		</form>
 	</div>
+
+	{#if form?.refreshed?.length}
+		<p class="mb-4 rounded bg-green-100 p-3 text-green-900">
+			{#each form.refreshed as r (r.symbol)}
+				{r.symbol}: {moneyPrecise.format(r.price)}/share — updated to {money.format(r.value)}.
+			{/each}
+		</p>
+	{/if}
+	{#if form?.errors?.length}
+		<p class="mb-4 rounded bg-red-100 p-3 text-red-900">
+			{#each form.errors as e (e.symbol)}
+				{e.symbol}: {e.message}
+			{/each}
+		</p>
+	{/if}
 
 	{#if data.targetsSum !== 100}
 		<p class="mb-4 rounded bg-yellow-100 p-3 text-yellow-900">
@@ -59,6 +84,7 @@
 				<th class="py-1">Category</th>
 				<th class="py-1">Target %</th>
 				<th class="py-1">Actual %</th>
+				<th class="py-1">Actual $</th>
 				<th class="py-1">Drift</th>
 				<th class="py-1">Buy</th>
 			</tr>
@@ -69,6 +95,7 @@
 					<td class="py-1">{row.name}</td>
 					<td class="py-1">{row.targetWeight.toFixed(1)}%</td>
 					<td class="py-1">{row.actualPercent.toFixed(1)}%</td>
+					<td class="py-1">{money.format(row.actualValue)}</td>
 					<td class="py-1">{row.driftPercent.toFixed(1)}%</td>
 					<td class="py-1">{row.deltaValue > 0 ? money.format(row.deltaValue) : ''}</td>
 				</tr>
