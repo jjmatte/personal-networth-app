@@ -30,6 +30,15 @@ describe('fetchPrice', () => {
     expect(calledUrl).toContain('symbol=VOO');
     expect(calledUrl).toContain('apikey=test-key');
   });
+  it('uses an overridden base url when provided', async () => {
+    let calledUrl = '';
+    const fakeFetch = (async (url: string) => {
+      calledUrl = String(url);
+      return { json: async () => ({ price: '100' }) } as Response;
+    }) as unknown as typeof fetch;
+    await fetchPrice('VOO', { apiKey: 'k', fetchFn: fakeFetch, baseUrl: 'http://localhost:9999' });
+    expect(calledUrl).toContain('http://localhost:9999/price?symbol=VOO');
+  });
   it('throws when no api key is available', async () => {
     await expect(fetchPrice('VOO', { apiKey: '' })).rejects.toThrow(/TWELVE_DATA_API_KEY/);
   });

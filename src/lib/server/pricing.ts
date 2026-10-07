@@ -13,12 +13,13 @@ export function parsePriceResponse(body: unknown): number {
 
 export async function fetchPrice(
   symbol: string,
-  opts: { apiKey?: string; fetchFn?: typeof fetch } = {}
+  opts: { apiKey?: string; fetchFn?: typeof fetch; baseUrl?: string } = {}
 ): Promise<number> {
   const apiKey = opts.apiKey ?? env.TWELVE_DATA_API_KEY;
   if (!apiKey) throw new Error('TWELVE_DATA_API_KEY is not set');
   const fetchFn = opts.fetchFn ?? fetch;
-  const url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+  const base = opts.baseUrl ?? env.PRICE_API_BASE ?? 'https://api.twelvedata.com';
+  const url = `${base}/price?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
   const res = await fetchFn(url);
   const body = await res.json();
   return parsePriceResponse(body);

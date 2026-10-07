@@ -23,8 +23,12 @@ test('dashboard recommends the most out-of-sync category for a contribution', as
 	await page.getByLabel('Name').fill('Alpha Fund');
 	await page.getByLabel('Category').selectOption({ label: 'Alpha' });
 	await page.getByRole('button', { name: 'Add holding' }).click();
-	await page.getByLabel('New value for ALP').fill('1000');
-	await page.getByRole('button', { name: 'Update ALP value' }).click();
+	// A purchase prices Alpha (stub $100 x 10 shares = $1,000).
+	await page.getByRole('link', { name: 'ALP' }).click();
+	await page.getByLabel('Shares').fill('10');
+	await page.getByLabel('Price per share').fill('100');
+	await page.getByRole('button', { name: 'Add purchase' }).click();
+	await expect(page.getByText(/cost basis/i)).toContainText('$1,000');
 
 	await page.goto('/');
 	await page.getByLabel('Monthly contribution').fill('500');

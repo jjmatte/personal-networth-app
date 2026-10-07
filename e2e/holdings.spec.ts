@@ -1,21 +1,16 @@
 import { test, expect } from '@playwright/test';
-test('add a holding and update its value', async ({ page }) => {
-  await page.goto('/holdings');
-  await page.getByLabel('Symbol').fill('VOO');
-  await page.getByLabel('Name').fill('S&P 500 ETF');
-  await page.getByRole('button', { name: 'Add holding' }).click();
-  await expect(page.getByText('VOO')).toBeVisible();
 
-  await page.getByLabel('New value for VOO').fill('1500');
-  await page.getByRole('button', { name: 'Update VOO value' }).click();
-  await expect(page.getByText('$1,500')).toBeVisible();
-});
-test('rejects a negative value', async ({ page }) => {
+test('add a holding; value is derived, never typed', async ({ page }) => {
   await page.goto('/holdings');
-  await page.getByLabel('Symbol').fill('BAD');
-  await page.getByLabel('Name').fill('Bad');
+  await page.getByLabel('Symbol').fill('RFSH');
+  await page.getByLabel('Name').fill('Refresh Test ETF');
   await page.getByRole('button', { name: 'Add holding' }).click();
-  await page.getByLabel('New value for BAD').fill('-10');
-  await page.getByRole('button', { name: 'Update BAD value' }).click();
-  await expect(page.getByText(/invalid value/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'RFSH' })).toBeVisible();
+
+  // No manual dollar entry exists anymore — value only comes from a price refresh.
+  await expect(page.getByLabel('New value for RFSH')).toHaveCount(0);
+
+  // Refresh works (priced against the local stub); with no shares yet it stays $0.
+  await page.getByRole('button', { name: 'Refresh RFSH price' }).click();
+  await expect(page.getByText(/couldn't refresh/i)).toHaveCount(0);
 });
