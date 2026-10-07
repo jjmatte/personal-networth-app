@@ -31,16 +31,12 @@ export const load: PageServerLoad = async () => {
 	};
 };
 
-// Holdings we currently pull live prices for (stocks/ETFs via Twelve Data).
-const PRICEABLE = new Set(['VOO']);
-
 export const actions: Actions = {
 	refreshPrices: async () => {
 		const holdings = await listHoldings();
-		const targets = holdings.filter((h) => PRICEABLE.has(h.symbol));
 		const refreshed: { symbol: string; price: number; value: number }[] = [];
 		const errors: { symbol: string; message: string }[] = [];
-		for (const h of targets) {
+		for (const h of holdings) {
 			try {
 				const r = await refreshHoldingValue(h.id);
 				refreshed.push({ symbol: r.symbol, price: r.price, value: r.value });
