@@ -23,6 +23,12 @@
 		<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.error}</p>
 	{/if}
 
+	{#if form?.priceWarning}
+		<p class="mb-4 rounded bg-amber-100 p-3 text-amber-900">
+			Couldn't refresh the live price — value may be stale.
+		</p>
+	{/if}
+
 	<div class="mb-6 divide-y rounded border">
 		{#each data.holdings as holding (holding.id)}
 			<div class="flex items-center gap-2 p-2">
@@ -59,17 +65,9 @@
 					<span class="w-24">{money.format(holding.currentValue)}</span>
 					<button type="button" onclick={() => (editingId = holding.id)}>Edit</button>
 				{/if}
-				<form method="POST" action="?/setValue" use:enhance class="flex items-center gap-2">
+				<form method="POST" action="?/refresh" use:enhance class="flex items-center gap-2">
 					<input type="hidden" name="id" value={holding.id} />
-					<input
-						name="value"
-						type="number"
-						step="0.01"
-						required
-						aria-label={`New value for ${holding.symbol}`}
-						class="w-24 rounded border px-2 py-1"
-					/>
-					<button type="submit" aria-label={`Update ${holding.symbol} value`}>Update value</button>
+					<button type="submit" aria-label={`Refresh ${holding.symbol} price`}>Refresh</button>
 				</form>
 			</div>
 		{/each}

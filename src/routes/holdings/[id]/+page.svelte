@@ -24,6 +24,12 @@
 		<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.error}</p>
 	{/if}
 
+	{#if form?.priceWarning}
+		<p class="mb-4 rounded bg-amber-100 p-3 text-amber-900">
+			Saved, but couldn't refresh the live price — value may be stale.
+		</p>
+	{/if}
+
 	<div class="mb-6 flex gap-6">
 		<div class="text-lg font-medium">Cost basis: {money.format(data.costBasis)}</div>
 		<div class="text-lg font-medium">

@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { getHolding } from '$lib/server/repositories/holdings';
-import { listLots, createLot, deleteLot } from '$lib/server/repositories/lots';
+import { listLots, addLotAndRefresh, removeLotAndRefresh } from '$lib/server/repositories/lots';
 import { lotSchema } from '$lib/schemas';
 import { holdingCostBasis, holdingGain, perLotGain } from '$lib/finance/gains';
 import type { Lot } from '$lib/finance/types';
@@ -29,12 +29,12 @@ export const actions: Actions = {
 		const form = Object.fromEntries(await request.formData());
 		const parsed = lotSchema.safeParse({ ...form, holdingId: params.id });
 		if (!parsed.success) return fail(400, { error: 'Invalid purchase' });
-		await createLot(parsed.data);
-		return { success: true };
+		const { priced } = await addLotAndRefresh(parsed.data);
+		return { success: true, priceWarning: !priced };
 	},
 	removeLot: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
-		await deleteLot(Number(form.lotId));
-		return { success: true };
+		const { priced } = await removeLotAndRefresh(Number(form.lotId));
+		return { success: true, priceWarning: !priced };
 	}
 };

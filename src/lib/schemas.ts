@@ -13,9 +13,6 @@ export const holdingSchema = z.object({
   categoryId: z.coerce.number().int().nullable(),
   currentValue: positive.default(0)
 });
-export const holdingValueSchema = z.object({
-  value: z.string().trim().min(1).pipe(z.coerce.number().finite().nonnegative())
-});
 export const lotSchema = z.object({
   holdingId: z.coerce.number().int(),
   tradeDate: z.coerce.date(),

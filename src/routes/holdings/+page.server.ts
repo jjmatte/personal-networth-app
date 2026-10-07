@@ -1,8 +1,8 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { listHoldings, createHolding, updateHolding, setHoldingValue } from '$lib/server/repositories/holdings';
+import { listHoldings, createHolding, updateHolding, refreshHoldingValue } from '$lib/server/repositories/holdings';
 import { listCategories } from '$lib/server/repositories/categories';
-import { holdingSchema, holdingValueSchema } from '$lib/schemas';
+import { holdingSchema } from '$lib/schemas';
 
 export const load: PageServerLoad = async () => ({
 	holdings: await listHoldings(),
@@ -24,11 +24,13 @@ export const actions: Actions = {
 		await updateHolding(Number(form.id), parsed.data);
 		return { success: true };
 	},
-	setValue: async ({ request }) => {
+	refresh: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
-		const parsed = holdingValueSchema.safeParse(form);
-		if (!parsed.success) return fail(400, { error: 'Invalid value' });
-		await setHoldingValue(Number(form.id), parsed.data.value);
-		return { success: true };
+		try {
+			await refreshHoldingValue(Number(form.id));
+			return { success: true };
+		} catch {
+			return { success: true, priceWarning: true };
+		}
 	}
 };
