@@ -8,6 +8,13 @@
       "when": 1790881970153,
       "tag": "0000_wealthy_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791397340125,
+      "tag": "0001_serious_rumiko_fujikawa",
+      "breakpoints": true
     }
   ]
 }

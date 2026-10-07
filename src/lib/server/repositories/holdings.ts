@@ -11,20 +11,13 @@ export async function createHolding(input: { symbol: string; name: string; categ
 export async function updateHolding(id: number, input: { symbol: string; name: string; categoryId: number | null }) {
   return db.update(holding).set({ ...input, updatedAt: new Date() }).where(eq(holding.id, id)).returning().get();
 }
-export async function setHoldingValue(id: number, value: number) {
-  db.update(holding).set({ currentValue: value, updatedAt: new Date() }).where(eq(holding.id, id)).run();
-  db.insert(valueHistory).values({ holdingId: id, value }).run();
-}
-
-export async function refreshHoldingValue(
-  id: number,
-  opts?: { apiKey?: string; fetchFn?: typeof fetch }
-) {
-  const h = await getHolding(id);
+// Write a holding's value from a known per-share price: value = shares x price.
+// Also caches the price on the holding so a later offline buy/sell can reuse it.
+export function applyHoldingPrice(id: number, price: number) {
+  const h = db.select().from(holding).where(eq(holding.id, id)).get();
   if (!h) throw new Error('holding not found');
   const lots = db.select().from(lot).where(eq(lot.holdingId, id)).all();
   const shares = lots.reduce((s, l) => s + l.shares, 0);
-  const price = await fetchPrice(h.symbol, opts);
   const value = shares * price;
   // Overwrite the most-recent snapshot rather than appending, so backfilled history is preserved.
   const latest = db
@@ -39,6 +32,16 @@ export async function refreshHoldingValue(
   } else {
     db.insert(valueHistory).values({ holdingId: id, value }).run();
   }
-  db.update(holding).set({ currentValue: value, updatedAt: new Date() }).where(eq(holding.id, id)).run();
+  db.update(holding).set({ currentValue: value, lastPrice: price, updatedAt: new Date() }).where(eq(holding.id, id)).run();
   return { symbol: h.symbol, shares, price, value };
+}
+
+export async function refreshHoldingValue(
+  id: number,
+  opts?: { apiKey?: string; fetchFn?: typeof fetch }
+) {
+  const h = await getHolding(id);
+  if (!h) throw new Error('holding not found');
+  const price = await fetchPrice(h.symbol, opts);
+  return applyHoldingPrice(id, price);
 }

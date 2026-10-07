@@ -1,0 +1,1 @@
+ALTER TABLE `holding` ADD `last_price` real;

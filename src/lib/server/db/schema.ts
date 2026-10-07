@@ -13,6 +13,7 @@ export const holding = sqliteTable('holding', {
   name: text('name').notNull(),
   categoryId: integer('category_id').references(() => category.id, { onDelete: 'set null' }),
   currentValue: real('current_value').notNull().default(0),
+  lastPrice: real('last_price'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 });
 
