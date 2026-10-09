@@ -68,7 +68,13 @@
 		</tbody>
 	</table>
 
-	<form method="POST" action="?/addLot" use:enhance class="flex flex-col gap-3 rounded border p-4">
+	<form
+		method="POST"
+		action="?/addLot"
+		use:enhance
+		id="add-purchase"
+		class="flex flex-col gap-3 rounded border p-4"
+	>
 		<h2 class="font-medium">Add purchase</h2>
 		<div class="flex flex-col gap-1">
 			<label for="lot-tradeDate">Trade date</label>
