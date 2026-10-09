@@ -102,4 +102,24 @@
 			{/each}
 		</tbody>
 	</table>
+
+	<section class="mt-8">
+		<h2 class="mb-2 font-medium">Holdings</h2>
+		<div class="divide-y rounded border">
+			{#each data.holdings as holding (holding.id)}
+				<div class="flex items-center gap-2 p-2">
+					<a class="w-20 text-blue-700 underline" href={`/holdings/${holding.id}`}>
+						{holding.symbol}
+					</a>
+					<span class="flex-1">{holding.name}</span>
+					<span class="w-24">{money.format(holding.currentValue)}</span>
+					<a
+						href={`/holdings/${holding.id}#add-purchase`}
+						aria-label={`Buy ${holding.symbol}`}
+						class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</a
+					>
+				</div>
+			{/each}
+		</div>
+	</section>
 </main>

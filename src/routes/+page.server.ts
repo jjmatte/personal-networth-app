@@ -24,6 +24,12 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		rows,
+		holdings: holdings.map((h) => ({
+			id: h.id,
+			symbol: h.symbol,
+			name: h.name,
+			currentValue: h.currentValue
+		})),
 		recommended: recommended && { categoryId: recommended.categoryId, name: recommended.name },
 		total: totalValue(holdings),
 		overallGain: overallGain(holdingInputs),
