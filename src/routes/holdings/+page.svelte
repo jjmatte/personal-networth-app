@@ -59,10 +59,15 @@
 						<button type="button" onclick={() => (editingId = null)}>Cancel</button>
 					</form>
 				{:else}
-					<a class="w-20" href={`/holdings/${holding.id}`}>{holding.symbol}</a>
+					<a class="w-20 text-blue-700 underline" href={`/holdings/${holding.id}`}>{holding.symbol}</a>
 					<span class="flex-1">{holding.name}</span>
 					<span class="w-32">{categoryName(holding.categoryId)}</span>
 					<span class="w-24">{money.format(holding.currentValue)}</span>
+					<a
+						href={`/holdings/${holding.id}#add-purchase`}
+						aria-label={`Buy ${holding.symbol}`}
+						class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</a
+					>
 					<button type="button" onclick={() => (editingId = holding.id)}>Edit</button>
 				{/if}
 				<form method="POST" action="?/refresh" use:enhance class="flex items-center gap-2">
