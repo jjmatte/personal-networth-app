@@ -24,7 +24,7 @@ test('dashboard recommends the most out-of-sync category for a contribution', as
 	await page.getByLabel('Category').selectOption({ label: 'Alpha' });
 	await page.getByRole('button', { name: 'Add holding' }).click();
 	// A purchase prices Alpha (stub $100 x 10 shares = $1,000).
-	await page.getByRole('link', { name: 'ALP' }).click();
+	await page.getByRole('link', { name: 'ALP', exact: true }).click();
 	await page.getByLabel('Shares').fill('10');
 	await page.getByLabel('Price per share').fill('100');
 	await page.getByRole('button', { name: 'Add purchase' }).click();

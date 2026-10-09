@@ -5,7 +5,7 @@ test('add a holding; value is derived, never typed', async ({ page }) => {
   await page.getByLabel('Symbol').fill('RFSH');
   await page.getByLabel('Name').fill('Refresh Test ETF');
   await page.getByRole('button', { name: 'Add holding' }).click();
-  await expect(page.getByRole('link', { name: 'RFSH' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'RFSH', exact: true })).toBeVisible();
 
   // No manual dollar entry exists anymore — value only comes from a price refresh.
   await expect(page.getByLabel('New value for RFSH')).toHaveCount(0);
