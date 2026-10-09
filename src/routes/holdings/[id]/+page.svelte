@@ -11,6 +11,28 @@
 
 	const today = new Date().toISOString().slice(0, 10);
 
+	let pricePerShare = $state<number | ''>('');
+	let priceError = $state<string | null>(null);
+	let fetchingPrice = $state(false);
+
+	async function useTodaysPrice() {
+		fetchingPrice = true;
+		priceError = null;
+		try {
+			const res = await fetch(`/holdings/${data.holding.id}/price`);
+			const body = await res.json();
+			if (!res.ok || body.error) {
+				priceError = body.error ?? 'Could not fetch price';
+				return;
+			}
+			pricePerShare = body.price;
+		} catch {
+			priceError = 'Could not fetch price';
+		} finally {
+			fetchingPrice = false;
+		}
+	}
+
 	function formatDate(d: Date) {
 		return new Date(d).toLocaleDateString('en-US');
 	}
@@ -86,7 +108,30 @@
 		</div>
 		<div class="flex flex-col gap-1">
 			<label for="lot-price">Price per share</label>
-			<input id="lot-price" name="pricePerShare" type="number" step="any" required class="rounded border px-2 py-1" />
+			<div class="flex items-center gap-2">
+				<input
+					id="lot-price"
+					name="pricePerShare"
+					type="number"
+					step="any"
+					required
+					bind:value={pricePerShare}
+					class="flex-1 rounded border px-2 py-1"
+				/>
+				<button
+					type="button"
+					onclick={useTodaysPrice}
+					disabled={fetchingPrice}
+					class="whitespace-nowrap rounded border px-2 py-1 text-sm hover:bg-gray-50 disabled:opacity-50"
+				>
+					{fetchingPrice ? 'Fetching…' : "Use today's price"}
+				</button>
+			</div>
+			{#if priceError}
+				<p class="rounded bg-amber-100 p-2 text-sm text-amber-900">
+					Couldn't fetch today's price ({priceError}) — enter it manually.
+				</p>
+			{/if}
 		</div>
 		<div class="flex flex-col gap-1">
 			<label for="lot-fee">Fee</label>
