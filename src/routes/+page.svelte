@@ -3,12 +3,21 @@
 	import HistoryChart from '$lib/components/HistoryChart.svelte';
 	import HoldingsManager from '$lib/components/HoldingsManager.svelte';
 	import CategoriesManager from '$lib/components/CategoriesManager.svelte';
+	import { enhance } from '$app/forms';
 
 	let { data, form } = $props();
 
 	let contribution = $state(0);
 	let holdingsDialog: HTMLDialogElement;
 	let categoriesDialog: HTMLDialogElement;
+	let buyDialog: HTMLDialogElement;
+	let buyCategory = $state<{ id: number | null; name: string } | null>(null);
+	let buyHoldingId = $state<number | null>(null);
+	let buyPrice = $state<number | ''>('');
+	let buyPriceError = $state<string | null>(null);
+	let buyFetching = $state(false);
+
+	const today = new Date().toISOString().slice(0, 10);
 
 	const money = new Intl.NumberFormat('en-US', {
 		style: 'currency',
@@ -20,6 +29,38 @@
 		currency: 'USD',
 		minimumFractionDigits: 2
 	});
+	const sharesFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
+
+	function holdingsInCategory(categoryId: number | null) {
+		return data.holdings.filter((h) => h.categoryId === categoryId);
+	}
+
+	function openBuy(categoryId: number | null, name: string) {
+		buyCategory = { id: categoryId, name };
+		buyHoldingId = holdingsInCategory(categoryId)[0]?.id ?? null;
+		buyPrice = '';
+		buyPriceError = null;
+		buyDialog.showModal();
+	}
+
+	async function useTodaysBuyPrice() {
+		if (buyHoldingId == null) return;
+		buyFetching = true;
+		buyPriceError = null;
+		try {
+			const res = await fetch(`/holdings/${buyHoldingId}/price`);
+			const body = await res.json();
+			if (!res.ok || body.error) {
+				buyPriceError = body.error ?? 'Could not fetch price';
+				return;
+			}
+			buyPrice = body.price;
+		} catch {
+			buyPriceError = 'Could not fetch price';
+		} finally {
+			buyFetching = false;
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-5xl p-6">
@@ -113,7 +154,23 @@
 						<td class="py-1">{row.actualPercent.toFixed(1)}%</td>
 						<td class="py-1">{money.format(row.actualValue)}</td>
 						<td class="py-1">{row.driftPercent.toFixed(1)}%</td>
-						<td class="py-1">{row.deltaValue > 0 ? money.format(row.deltaValue) : ''}</td>
+						<td class="py-1">
+							{#if holdingsInCategory(row.categoryId).length > 0}
+								<div class="flex items-center gap-2">
+									<button
+										type="button"
+										onclick={() => openBuy(row.categoryId, row.name)}
+										aria-label={`Buy in ${row.name}`}
+										class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</button
+									>
+									{#if row.deltaValue > 0}
+										<span class="text-sm text-gray-500">{money.format(row.deltaValue)}</span>
+									{/if}
+								</div>
+							{:else if row.deltaValue > 0}
+								<span class="text-sm text-gray-500">{money.format(row.deltaValue)}</span>
+							{/if}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -128,12 +185,8 @@
 							{holding.symbol}
 						</a>
 						<span class="flex-1">{holding.name}</span>
+						<span class="w-24">{sharesFmt.format(holding.shares)} sh</span>
 						<span class="w-24">{money.format(holding.currentValue)}</span>
-						<a
-							href={`/holdings/${holding.id}#add-purchase`}
-							aria-label={`Buy ${holding.symbol}`}
-							class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</a
-						>
 					</div>
 				{/each}
 			</div>
@@ -182,6 +235,114 @@
 				>
 			</div>
 			<CategoriesManager categories={data.categories} targetsSum={data.targetsSum} {form} />
+		</div>
+	</dialog>
+
+	<dialog bind:this={buyDialog} class="w-full max-w-md rounded-lg p-0 backdrop:bg-black/40">
+		<div class="max-h-[85vh] overflow-auto p-6">
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-xl font-semibold">Buy in {buyCategory?.name}</h2>
+				<button
+					type="button"
+					onclick={() => buyDialog.close()}
+					class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Close</button
+				>
+			</div>
+
+			{#if form?.buyError}
+				<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.buyError}</p>
+			{/if}
+			{#if form?.buyWarning}
+				<p class="mb-4 rounded bg-amber-100 p-3 text-amber-900">
+					Saved, but couldn't refresh the live price — value may be stale.
+				</p>
+			{/if}
+
+			{#if buyCategory}
+				<form
+					method="POST"
+					action="?/buy"
+					use:enhance={() => {
+						return async ({ update, result }) => {
+							await update();
+							if (result.type === 'success') buyDialog.close();
+						};
+					}}
+					class="flex flex-col gap-3"
+				>
+					<input type="hidden" name="holdingId" value={buyHoldingId} />
+					<div class="flex flex-col gap-1">
+						<label for="buy-holding">Holding</label>
+						<select
+							id="buy-holding"
+							bind:value={buyHoldingId}
+							onchange={() => {
+								buyPrice = '';
+								buyPriceError = null;
+							}}
+							class="rounded border px-2 py-1"
+						>
+							{#each holdingsInCategory(buyCategory.id) as h (h.id)}
+								<option value={h.id}>{h.symbol} - {h.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="flex flex-col gap-1">
+						<label for="buy-date">Trade date</label>
+						<input
+							id="buy-date"
+							name="tradeDate"
+							type="date"
+							value={today}
+							required
+							class="rounded border px-2 py-1"
+						/>
+					</div>
+					<div class="flex flex-col gap-1">
+						<label for="buy-shares">Shares</label>
+						<input
+							id="buy-shares"
+							name="shares"
+							type="number"
+							step="any"
+							required
+							class="rounded border px-2 py-1"
+						/>
+					</div>
+					<div class="flex flex-col gap-1">
+						<label for="buy-price">Price per share</label>
+						<div class="flex items-center gap-2">
+							<input
+								id="buy-price"
+								name="pricePerShare"
+								type="number"
+								step="any"
+								required
+								bind:value={buyPrice}
+								class="flex-1 rounded border px-2 py-1"
+							/>
+							<button
+								type="button"
+								onclick={useTodaysBuyPrice}
+								disabled={buyFetching}
+								class="whitespace-nowrap rounded border px-2 py-1 text-sm hover:bg-gray-50 disabled:opacity-50"
+							>
+								{buyFetching ? 'Fetching…' : "Use today's price"}
+							</button>
+						</div>
+						{#if buyPriceError}
+							<p class="rounded bg-amber-100 p-2 text-sm text-amber-900">
+								Couldn't fetch today's price ({buyPriceError}) — enter it manually.
+							</p>
+						{/if}
+					</div>
+					<div class="flex flex-col gap-1">
+						<label for="buy-fee">Fee</label>
+						<input id="buy-fee" name="fee" type="number" step="any" class="rounded border px-2 py-1" />
+					</div>
+					<button type="submit">Add purchase</button>
+				</form>
+			{/if}
 		</div>
 	</dialog>
 </main>

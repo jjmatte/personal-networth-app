@@ -12,6 +12,7 @@
 			name: string;
 			categoryId: number | null;
 			currentValue: number;
+			shares: number;
 		}[];
 		categories: { id: number; name: string }[];
 		form: { holdingError?: string; priceWarning?: boolean } | null;
@@ -24,6 +25,7 @@
 		currency: 'USD',
 		maximumFractionDigits: 0
 	});
+	const sharesFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
 
 	function categoryName(categoryId: number | null) {
 		if (categoryId === null) return 'Uncategorized';
@@ -74,12 +76,8 @@
 				<a class="w-20 text-blue-700 underline" href={`/holdings/${holding.id}`}>{holding.symbol}</a>
 				<span class="flex-1">{holding.name}</span>
 				<span class="w-32">{categoryName(holding.categoryId)}</span>
+				<span class="w-24">{sharesFmt.format(holding.shares)} sh</span>
 				<span class="w-24">{money.format(holding.currentValue)}</span>
-				<a
-					href={`/holdings/${holding.id}#add-purchase`}
-					aria-label={`Buy ${holding.symbol}`}
-					class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</a
-				>
 				<button type="button" onclick={() => (editingId = holding.id)}>Edit</button>
 			{/if}
 			<form method="POST" action="?/refreshHolding" use:enhance class="flex items-center gap-2">

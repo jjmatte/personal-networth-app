@@ -12,7 +12,7 @@ test('record a purchase; value is derived from the live price', async ({ page })
 
 	// The purchase auto-refreshed the price (stub $100), so value = 10 x $100.
 	await page.goto('/');
-	await expect(
-		page.getByRole('link', { name: 'AAPL', exact: true }).locator('xpath=..')
-	).toContainText('$1,000');
+	const row = page.getByRole('link', { name: 'AAPL', exact: true }).locator('xpath=..');
+	await expect(row).toContainText('$1,000');
+	await expect(row).toContainText('10 sh');
 });

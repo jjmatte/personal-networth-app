@@ -13,11 +13,11 @@ import {
 	updateHolding,
 	refreshHoldingValue
 } from '$lib/server/repositories/holdings';
-import { listLots } from '$lib/server/repositories/lots';
+import { listLots, addLotAndRefresh } from '$lib/server/repositories/lots';
 import { holdingHistory } from '$lib/server/repositories/history';
 import { allocation, targetsSum, mostUnderweight } from '$lib/finance/allocation';
-import { totalValue, overallGain } from '$lib/finance/gains';
-import { holdingSchema, categorySchema } from '$lib/schemas';
+import { totalValue, overallGain, totalShares } from '$lib/finance/gains';
+import { holdingSchema, categorySchema, lotSchema } from '$lib/schemas';
 import type { Lot } from '$lib/finance/types';
 
 export const load: PageServerLoad = async () => {
@@ -27,10 +27,12 @@ export const load: PageServerLoad = async () => {
 	const forAlloc = holdings.map((h) => ({ categoryId: h.categoryId, currentValue: h.currentValue }));
 
 	const holdingInputs = [];
+	const sharesByHolding = new Map<number, number>();
 	for (const h of holdings) {
 		const rows = await listLots(h.id);
 		const lots: Lot[] = rows.map((l) => ({ shares: l.shares, pricePerShare: l.pricePerShare, fee: l.fee ?? undefined }));
 		holdingInputs.push({ currentValue: h.currentValue, lots });
+		sharesByHolding.set(h.id, totalShares(lots));
 	}
 
 	const series = [];
@@ -51,7 +53,8 @@ export const load: PageServerLoad = async () => {
 			symbol: h.symbol,
 			name: h.name,
 			categoryId: h.categoryId,
-			currentValue: h.currentValue
+			currentValue: h.currentValue,
+			shares: sharesByHolding.get(h.id) ?? 0
 		})),
 		recommended: recommended && { categoryId: recommended.categoryId, name: recommended.name },
 		total: totalValue(holdings),
@@ -127,5 +130,12 @@ export const actions: Actions = {
 		const form = Object.fromEntries(await request.formData());
 		await deleteCategory(Number(form.id));
 		return { success: true };
+	},
+	buy: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = lotSchema.safeParse(form);
+		if (!parsed.success) return fail(400, { buyError: 'Invalid purchase' });
+		const { priced } = await addLotAndRefresh(parsed.data);
+		return { success: true, buyWarning: !priced };
 	}
 };
