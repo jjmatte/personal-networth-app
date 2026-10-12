@@ -1,9 +1,23 @@
 import type { PageServerLoad, Actions } from './$types';
-import { listCategories } from '$lib/server/repositories/categories';
-import { listHoldings, refreshHoldingValue } from '$lib/server/repositories/holdings';
+import { fail } from '@sveltejs/kit';
+import {
+	listCategories,
+	createCategory,
+	updateCategory,
+	deleteCategory,
+	TargetWeightError
+} from '$lib/server/repositories/categories';
+import {
+	listHoldings,
+	createHolding,
+	updateHolding,
+	refreshHoldingValue
+} from '$lib/server/repositories/holdings';
 import { listLots } from '$lib/server/repositories/lots';
+import { holdingHistory } from '$lib/server/repositories/history';
 import { allocation, targetsSum, mostUnderweight } from '$lib/finance/allocation';
 import { totalValue, overallGain } from '$lib/finance/gains';
+import { holdingSchema, categorySchema } from '$lib/schemas';
 import type { Lot } from '$lib/finance/types';
 
 export const load: PageServerLoad = async () => {
@@ -19,15 +33,24 @@ export const load: PageServerLoad = async () => {
 		holdingInputs.push({ currentValue: h.currentValue, lots });
 	}
 
+	const series = [];
+	for (const h of holdings) {
+		const points = await holdingHistory(h.id);
+		series.push({ symbol: h.symbol, points: points.map((p) => ({ t: p.recordedAt, value: p.value })) });
+	}
+
 	const rows = allocation(cats, forAlloc);
 	const recommended = mostUnderweight(rows);
 
 	return {
 		rows,
+		series,
+		categories,
 		holdings: holdings.map((h) => ({
 			id: h.id,
 			symbol: h.symbol,
 			name: h.name,
+			categoryId: h.categoryId,
 			currentValue: h.currentValue
 		})),
 		recommended: recommended && { categoryId: recommended.categoryId, name: recommended.name },
@@ -51,5 +74,58 @@ export const actions: Actions = {
 			}
 		}
 		return { refreshed, errors };
+	},
+	createHolding: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = holdingSchema.safeParse({ ...form, categoryId: form.categoryId || null });
+		if (!parsed.success) return fail(400, { holdingError: 'Invalid holding' });
+		await createHolding(parsed.data);
+		return { success: true };
+	},
+	updateHolding: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = holdingSchema
+			.omit({ currentValue: true })
+			.safeParse({ ...form, categoryId: form.categoryId || null });
+		if (!parsed.success) return fail(400, { holdingError: 'Invalid holding' });
+		await updateHolding(Number(form.id), parsed.data);
+		return { success: true };
+	},
+	refreshHolding: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		try {
+			await refreshHoldingValue(Number(form.id));
+			return { success: true };
+		} catch {
+			return { success: true, priceWarning: true };
+		}
+	},
+	createCategory: async ({ request }) => {
+		const parsed = categorySchema.safeParse(Object.fromEntries(await request.formData()));
+		if (!parsed.success) return fail(400, { categoryError: 'Invalid category' });
+		try {
+			await createCategory(parsed.data);
+		} catch (e) {
+			if (e instanceof TargetWeightError) return fail(400, { categoryError: e.message });
+			throw e;
+		}
+		return { success: true };
+	},
+	updateCategory: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = categorySchema.safeParse(form);
+		if (!parsed.success) return fail(400, { categoryError: 'Invalid category' });
+		try {
+			await updateCategory(Number(form.id), parsed.data);
+		} catch (e) {
+			if (e instanceof TargetWeightError) return fail(400, { categoryError: e.message });
+			throw e;
+		}
+		return { success: true };
+	},
+	deleteCategory: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		await deleteCategory(Number(form.id));
+		return { success: true };
 	}
 };
