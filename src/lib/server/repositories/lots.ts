@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { lot } from '../db/schema';
+import { lot, holding } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { refreshHoldingValue, getHolding, applyHoldingPrice } from './holdings';
 
@@ -7,6 +7,22 @@ type PriceOpts = { apiKey?: string; fetchFn?: typeof fetch };
 
 export async function listLots(holdingId: number) {
   return db.select().from(lot).where(eq(lot.holdingId, holdingId)).all();
+}
+export async function listPurchases() {
+  return db
+    .select({
+      id: lot.id,
+      holdingId: lot.holdingId,
+      symbol: holding.symbol,
+      name: holding.name,
+      tradeDate: lot.tradeDate,
+      shares: lot.shares,
+      pricePerShare: lot.pricePerShare,
+      fee: lot.fee
+    })
+    .from(lot)
+    .innerJoin(holding, eq(lot.holdingId, holding.id))
+    .all();
 }
 export async function createLot(input: { holdingId: number; tradeDate: Date; shares: number; pricePerShare: number; fee?: number; note?: string }) {
   return db.insert(lot).values(input).returning().get();
