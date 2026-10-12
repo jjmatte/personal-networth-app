@@ -12,9 +12,6 @@
 <nav class="border-b">
 	<div class="mx-auto flex max-w-3xl gap-4 p-4">
 		<a href="/">Dashboard</a>
-		<a href="/holdings">Holdings</a>
-		<a href="/categories">Categories</a>
-		<a href="/history">History</a>
 	</div>
 </nav>
 

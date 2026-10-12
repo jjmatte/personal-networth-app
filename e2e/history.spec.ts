@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
-test('history page renders a chart after a purchase', async ({ page }) => {
-	await page.goto('/holdings');
-	await page.getByLabel('Symbol').fill('HST');
-	await page.getByLabel('Name').fill('History Test');
-	await page.getByRole('button', { name: 'Add holding' }).click();
+import { addHolding } from './helpers';
+
+test('dashboard renders the history chart after a purchase', async ({ page }) => {
+	await addHolding(page, 'HST', 'History Test');
 
 	// A purchase prices the holding (stub $100), recording a value snapshot.
 	await page.getByRole('link', { name: 'HST', exact: true }).click();
@@ -12,7 +11,9 @@ test('history page renders a chart after a purchase', async ({ page }) => {
 	await page.getByRole('button', { name: 'Add purchase' }).click();
 	await expect(page.getByText(/cost basis/i)).toContainText('$500');
 
-	await page.goto('/history');
-	await expect(page.getByRole('heading', { name: /history/i })).toBeVisible();
-	await expect(page.locator('canvas')).toBeVisible();
+	await page.goto('/');
+	const chart = page
+		.getByRole('heading', { name: 'History' })
+		.locator('xpath=following-sibling::canvas[1]');
+	await expect(chart).toBeVisible();
 });

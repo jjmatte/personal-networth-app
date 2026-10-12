@@ -1,12 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { addHolding } from './helpers';
 
 // "Use today's price" fills the Price per share field from the live price API
 // (the e2e price stub returns $100). The field stays editable.
 test("Use today's price fills price per share from the API", async ({ page }) => {
-	await page.goto('/holdings');
-	await page.getByLabel('Symbol').fill('PFIL');
-	await page.getByLabel('Name').fill('Price Fill ETF');
-	await page.getByRole('button', { name: 'Add holding' }).click();
+	await addHolding(page, 'PFIL', 'Price Fill ETF');
 	await page.getByRole('link', { name: 'PFIL', exact: true }).click();
 
 	// Starts empty, gets filled with the stub price on click.
