@@ -11,7 +11,9 @@
 
 <nav class="border-b">
 	<div class="mx-auto flex max-w-3xl gap-4 p-4">
-		<a href="/">Dashboard</a>
+		<a href="/">Home</a>
+		<a href="/investments">Investments</a>
+		<a href="/net-worth">Net Worth</a>
 		<a href="/purchases">Purchases</a>
 	</div>
 </nav>

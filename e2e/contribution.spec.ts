@@ -3,7 +3,7 @@ import { addHolding } from './helpers';
 
 test('dashboard recommends the most out-of-sync category for a contribution', async ({ page }) => {
 	// The e2e DB is shared across specs, so start from a known-clean category list.
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByRole('button', { name: 'Manage categories' }).click();
 	const cats = page.getByRole('dialog');
 	for (let n = await cats.getByRole('button', { name: 'Delete' }).count(); n > 0; n--) {
@@ -29,7 +29,7 @@ test('dashboard recommends the most out-of-sync category for a contribution', as
 	await page.getByRole('button', { name: 'Add purchase' }).click();
 	await expect(page.getByText(/cost basis/i)).toContainText('$1,000');
 
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByLabel('Monthly contribution').fill('500');
 	await expect(page.getByText(/put \$500 into/i)).toContainText('Beta');
 });

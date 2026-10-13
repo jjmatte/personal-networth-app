@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('add a holding; value is derived, never typed', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByRole('button', { name: 'Manage holdings' }).click();
 	const dialog = page.getByRole('dialog');
 

@@ -7,7 +7,7 @@ test('buy from a category row picks a holding and records the purchase', async (
 	await addCategory(page, 'BuyCat', '10');
 	await addHolding(page, 'BCAT', 'Buy Cat ETF', 'BuyCat');
 
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByRole('button', { name: 'Buy in BuyCat' }).click();
 	const dialog = page.getByRole('dialog');
 	await expect(dialog.getByRole('heading', { name: 'Buy in BuyCat' })).toBeVisible();

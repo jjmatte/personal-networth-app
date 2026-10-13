@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 // Holdings and categories are managed from dashboard modals, not their own pages.
 export async function addHolding(page: Page, symbol: string, name: string, categoryLabel?: string) {
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByRole('button', { name: 'Manage holdings' }).click();
 	const dialog = page.getByRole('dialog');
 	await dialog.getByLabel('Symbol').fill(symbol);
@@ -14,7 +14,7 @@ export async function addHolding(page: Page, symbol: string, name: string, categ
 }
 
 export async function addCategory(page: Page, name: string, target: string) {
-	await page.goto('/');
+	await page.goto('/investments');
 	await page.getByRole('button', { name: 'Manage categories' }).click();
 	const dialog = page.getByRole('dialog');
 	await dialog.getByLabel('Name').fill(name);

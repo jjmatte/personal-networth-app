@@ -11,7 +11,7 @@ test('dashboard renders the history chart after a purchase', async ({ page }) =>
 	await page.getByRole('button', { name: 'Add purchase' }).click();
 	await expect(page.getByText(/cost basis/i)).toContainText('$500');
 
-	await page.goto('/');
+	await page.goto('/investments');
 	const chart = page
 		.getByRole('heading', { name: 'History' })
 		.locator('xpath=following-sibling::canvas[1]');
