@@ -15,6 +15,13 @@
       "when": 1791397340125,
       "tag": "0001_serious_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791906928054,
+      "tag": "0002_calm_smasher",
+      "breakpoints": true
     }
   ]
 }

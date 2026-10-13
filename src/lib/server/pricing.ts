@@ -1,5 +1,12 @@
 import { env } from '$env/dynamic/private';
 
+// Twelve Data prices equities by bare ticker (AAPL) but crypto by pair (BTC/USD).
+// A bare crypto symbol silently resolves to an unrelated instrument, so form the pair.
+export function toQuoteSymbol(symbol: string, kind: string): string {
+  if (kind === 'crypto' && !symbol.includes('/')) return `${symbol}/USD`;
+  return symbol;
+}
+
 export function parsePriceResponse(body: unknown): number {
   const obj = (body ?? {}) as Record<string, unknown>;
   if (obj.status === 'error') {

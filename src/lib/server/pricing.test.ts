@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { parsePriceResponse, fetchPrice } from './pricing';
+import { parsePriceResponse, fetchPrice, toQuoteSymbol } from './pricing';
+
+describe('toQuoteSymbol', () => {
+  it('leaves an equity ticker alone', () => {
+    expect(toQuoteSymbol('VOO', 'equity')).toBe('VOO');
+  });
+  it('forms a USD pair for crypto', () => {
+    expect(toQuoteSymbol('BTC', 'crypto')).toBe('BTC/USD');
+  });
+  it('does not double up when the pair is already present', () => {
+    expect(toQuoteSymbol('BTC/USD', 'crypto')).toBe('BTC/USD');
+  });
+});
 
 describe('parsePriceResponse', () => {
   it('parses the numeric price from a good response', () => {

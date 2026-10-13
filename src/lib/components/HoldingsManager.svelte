@@ -10,6 +10,7 @@
 			id: number;
 			symbol: string;
 			name: string;
+			kind: string;
 			categoryId: number | null;
 			currentValue: number;
 			shares: number;
@@ -61,6 +62,10 @@
 					<input type="hidden" name="id" value={holding.id} />
 					<input name="symbol" value={holding.symbol} class="w-20 rounded border px-2 py-1" />
 					<input name="name" value={holding.name} class="flex-1 rounded border px-2 py-1" />
+					<select name="kind" class="rounded border px-2 py-1">
+						<option value="equity" selected={holding.kind === 'equity'}>Equity</option>
+						<option value="crypto" selected={holding.kind === 'crypto'}>Crypto</option>
+					</select>
 					<select name="categoryId" class="rounded border px-2 py-1">
 						<option value="">Uncategorized</option>
 						{#each categories as category (category.id)}
@@ -97,6 +102,13 @@
 	<div class="flex flex-col gap-1">
 		<label for="holding-name">Name</label>
 		<input id="holding-name" name="name" required class="rounded border px-2 py-1" />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="holding-kind">Type</label>
+		<select id="holding-kind" name="kind" class="rounded border px-2 py-1">
+			<option value="equity">Equity</option>
+			<option value="crypto">Crypto</option>
+		</select>
 	</div>
 	<div class="flex flex-col gap-1">
 		<label for="holding-category">Category</label>

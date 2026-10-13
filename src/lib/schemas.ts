@@ -10,6 +10,7 @@ export const categorySchema = z.object({
 export const holdingSchema = z.object({
   symbol: z.string().min(1),
   name: z.string().min(1),
+  kind: z.enum(['equity', 'crypto']).default('equity'),
   categoryId: z.coerce.number().int().nullable(),
   currentValue: positive.default(0)
 });

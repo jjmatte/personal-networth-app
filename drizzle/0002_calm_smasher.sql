@@ -1,0 +1,1 @@
+ALTER TABLE `holding` ADD `kind` text DEFAULT 'equity' NOT NULL;

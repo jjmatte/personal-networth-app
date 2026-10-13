@@ -11,6 +11,7 @@ export const holding = sqliteTable('holding', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   symbol: text('symbol').notNull(),
   name: text('name').notNull(),
+  kind: text('kind').notNull().default('equity'),
   categoryId: integer('category_id').references(() => category.id, { onDelete: 'set null' }),
   currentValue: real('current_value').notNull().default(0),
   lastPrice: real('last_price'),

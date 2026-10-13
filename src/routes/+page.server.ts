@@ -52,6 +52,7 @@ export const load: PageServerLoad = async () => {
 			id: h.id,
 			symbol: h.symbol,
 			name: h.name,
+			kind: h.kind,
 			categoryId: h.categoryId,
 			currentValue: h.currentValue,
 			shares: sharesByHolding.get(h.id) ?? 0
