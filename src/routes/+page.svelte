@@ -1,7 +1,7 @@
 <script lang="ts">
 	let { data } = $props();
 	const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
+	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 </script>
 
 <main class="mx-auto max-w-3xl p-6">

@@ -40,6 +40,13 @@ describe('networth repository', () => {
     expect((await latestSnapshot())!.id).toBe(b.id);
   });
 
+  it('breaks same-day ties by higher id in latestSnapshot and listSnapshots', async () => {
+    await createSnapshot({ takenAt: new Date('2026-05-01'), items: [row({ amount: 1 })] });
+    const second = await createSnapshot({ takenAt: new Date('2026-05-01'), items: [row({ amount: 2 })] });
+    expect((await latestSnapshot())!.id).toBe(second.id);
+    expect((await listSnapshots())[0].id).toBe(second.id);
+  });
+
   it('updateSnapshot replaces items and recomputes total', async () => {
     const { id } = await createSnapshot({ takenAt: new Date('2026-01-01'), items: [row({ amount: 100 })] });
     await updateSnapshot(id, {

@@ -49,7 +49,7 @@ export async function getSnapshot(id: number) {
 }
 
 export async function listSnapshots() {
-  const snaps = db.select().from(netWorthSnapshot).orderBy(desc(netWorthSnapshot.takenAt)).all();
+  const snaps = db.select().from(netWorthSnapshot).orderBy(desc(netWorthSnapshot.takenAt), desc(netWorthSnapshot.id)).all();
   const counts = db
     .select({ snapshotId: netWorthItem.snapshotId, n: sql<number>`count(*)` })
     .from(netWorthItem)
@@ -60,7 +60,7 @@ export async function listSnapshots() {
 }
 
 export async function latestSnapshot() {
-  return db.select().from(netWorthSnapshot).orderBy(desc(netWorthSnapshot.takenAt)).limit(1).get();
+  return db.select().from(netWorthSnapshot).orderBy(desc(netWorthSnapshot.takenAt), desc(netWorthSnapshot.id)).limit(1).get();
 }
 
 export async function updateSnapshot(id: number, input: SnapshotInput): Promise<void> {

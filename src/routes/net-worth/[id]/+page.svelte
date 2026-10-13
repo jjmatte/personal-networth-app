@@ -5,7 +5,7 @@
 	let { data, form } = $props();
 	let editing = $state(false);
 	const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
+	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 	const assets = $derived(data.items.filter((i) => i.side === 'asset'));
 	const liabilities = $derived(data.items.filter((i) => i.side === 'liability'));
 </script>
