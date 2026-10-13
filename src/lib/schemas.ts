@@ -22,3 +22,16 @@ export const lotSchema = z.object({
   fee: positive.optional(),
   note: z.string().optional()
 });
+
+export const netWorthItemSchema = z.object({
+  side: z.enum(['asset', 'liability']),
+  category: z.string().min(1),
+  label: z.string().min(1),
+  amount: z.coerce.number().finite().nonnegative(),
+  sortOrder: z.coerce.number().int().min(0).default(0)
+});
+export const netWorthSnapshotSchema = z.object({
+  takenAt: z.coerce.date(),
+  note: z.string().optional(),
+  items: z.array(netWorthItemSchema).min(1)
+});
