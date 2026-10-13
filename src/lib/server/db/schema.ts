@@ -34,3 +34,22 @@ export const valueHistory = sqliteTable('value_history', {
   recordedAt: integer('recorded_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   value: real('value').notNull()
 });
+
+export const netWorthSnapshot = sqliteTable('net_worth_snapshot', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  takenAt: integer('taken_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  note: text('note'),
+  total: real('total').notNull().default(0)
+});
+
+export const netWorthItem = sqliteTable('net_worth_item', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  snapshotId: integer('snapshot_id')
+    .notNull()
+    .references(() => netWorthSnapshot.id, { onDelete: 'cascade' }),
+  side: text('side').notNull(),
+  category: text('category').notNull(),
+  label: text('label').notNull(),
+  amount: real('amount').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0)
+});
