@@ -81,6 +81,13 @@ describe('networth repository', () => {
     expect(inv).toMatchObject({ side: 'asset', amount: 1960 });
   });
 
+  it('buildPrefill floors the Investments line down to the cent', async () => {
+    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 239070.15564999997 });
+    const pre = await buildPrefill();
+    const inv = pre.rows.find((r) => r.category === INVESTMENTS_LINE.category);
+    expect(inv!.amount).toBe(239070.15);
+  });
+
   it('buildPrefill carries forward the latest snapshot and refreshes the Investments amount', async () => {
     await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 500 });
     await createSnapshot({

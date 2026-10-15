@@ -148,6 +148,20 @@ describe('repositories', () => {
     expect((await getHolding(h.id))!.currentValue).toBe(1000);
   });
 
+  it('refreshHoldingValue floors sub-cent shares x price down to the cent', async () => {
+    const tdb = makeTestDb();
+    const h = await createHolding({ symbol: 'BTC', name: 'Bitcoin', kind: 'crypto', categoryId: null, currentValue: 0 });
+    tdb
+      .insert(lot)
+      .values({ holdingId: h.id, tradeDate: new Date('2025-01-01'), shares: 0.505, pricePerShare: 80000 })
+      .run();
+    const fakeFetch = (async () => ({ json: async () => ({ price: '83398.25' }) }) as Response) as unknown as typeof fetch;
+    const result = await refreshHoldingValue(h.id, { apiKey: 'k', fetchFn: fakeFetch });
+    // 0.505 * 83398.25 = 42116.11625  → floor to 42116.11
+    expect(result.value).toBe(42116.11);
+    expect((await getHolding(h.id))!.currentValue).toBe(42116.11);
+  });
+
   it('deleting a category nulls its holdings, not deletes them', async () => {
     const cat = await createCategory({ name: 'Temp', targetWeight: 10, sortOrder: 0 });
     const h = await createHolding({ symbol: 'X', name: 'X', categoryId: cat.id, currentValue: 50 });

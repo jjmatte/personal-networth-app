@@ -2,6 +2,7 @@ import { db } from '../db';
 import { holding, valueHistory, lot } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { fetchPrice, toQuoteSymbol } from '../pricing';
+import { floorToCents } from '$lib/money';
 
 export async function listHoldings() { return db.select().from(holding).all(); }
 export async function getHolding(id: number) { return db.select().from(holding).where(eq(holding.id, id)).get(); }
@@ -18,7 +19,7 @@ export function applyHoldingPrice(id: number, price: number) {
   if (!h) throw new Error('holding not found');
   const lots = db.select().from(lot).where(eq(lot.holdingId, id)).all();
   const shares = lots.reduce((s, l) => s + l.shares, 0);
-  const value = shares * price;
+  const value = floorToCents(shares * price);
   // Overwrite the most-recent snapshot rather than appending, so backfilled history is preserved.
   const latest = db
     .select()
