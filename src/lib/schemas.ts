@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { floorToCents } from './money';
 
 const positive = z.coerce.number().finite().nonnegative();
+const dollars = positive.transform(floorToCents);
 
 export const categorySchema = z.object({
   name: z.string().min(1),
@@ -12,14 +14,14 @@ export const holdingSchema = z.object({
   name: z.string().min(1),
   kind: z.enum(['equity', 'crypto']).default('equity'),
   categoryId: z.coerce.number().int().nullable(),
-  currentValue: positive.default(0)
+  currentValue: dollars.default(0)
 });
 export const lotSchema = z.object({
   holdingId: z.coerce.number().int(),
   tradeDate: z.coerce.date(),
   shares: z.coerce.number().finite().positive(),
   pricePerShare: positive,
-  fee: positive.optional(),
+  fee: dollars.optional(),
   note: z.string().optional()
 });
 
@@ -27,7 +29,7 @@ export const netWorthItemSchema = z.object({
   side: z.enum(['asset', 'liability']),
   category: z.string().min(1),
   label: z.string().min(1),
-  amount: z.coerce.number().finite().nonnegative(),
+  amount: dollars,
   sortOrder: z.coerce.number().int().min(0).default(0)
 });
 export const netWorthSnapshotSchema = z.object({
