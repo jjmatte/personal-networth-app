@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { formatUsd } from '$lib/money';
 	let { data } = $props();
-	const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 </script>
 
@@ -16,10 +16,10 @@
 			{#each data.snapshots as s (s.id)}
 				<a href={`/net-worth/${s.id}`} class="flex items-center gap-3 p-3 hover:bg-gray-50">
 					<span class="w-32">{dateFmt.format(new Date(s.takenAt))}</span>
-					<span class="flex-1 font-medium">{money.format(s.total)}</span>
+					<span class="flex-1 font-medium">{formatUsd(s.total)}</span>
 					{#if s.delta !== null}
 						<span class={s.delta >= 0 ? 'text-green-700' : 'text-red-700'}>
-							{s.delta >= 0 ? '+' : ''}{money.format(s.delta)}
+							{s.delta >= 0 ? '+' : ''}{formatUsd(s.delta)}
 						</span>
 					{/if}
 					<span class="w-16 text-right text-sm text-gray-500">{s.itemCount} items</span>

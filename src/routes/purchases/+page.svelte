@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { filterPurchases, sortPurchases, type SortKey } from '$lib/purchases';
+	import { formatUsd } from '$lib/money';
 
 	let { data } = $props();
 
@@ -87,8 +88,8 @@
 					<td class="py-1">{row.name}</td>
 					<td class="py-1">{row.shares}</td>
 					<td class="py-1">{money.format(row.pricePerShare)}</td>
-					<td class="py-1">{row.fee ? money.format(row.fee) : '—'}</td>
-					<td class="py-1">{money.format(row.cost)}</td>
+					<td class="py-1">{row.fee ? formatUsd(row.fee) : '—'}</td>
+					<td class="py-1">{formatUsd(row.cost)}</td>
 				</tr>
 			{/each}
 		</tbody>

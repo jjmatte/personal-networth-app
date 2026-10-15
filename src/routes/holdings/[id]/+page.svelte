@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { formatUsd } from '$lib/money';
 
 	let { data, form } = $props();
 
-	const money = new Intl.NumberFormat('en-US', {
+	const priceFmt = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
-		maximumFractionDigits: 0
+		minimumFractionDigits: 2
 	});
 
 	const today = new Date().toISOString().slice(0, 10);
@@ -53,9 +54,9 @@
 	{/if}
 
 	<div class="mb-6 flex gap-6">
-		<div class="text-lg font-medium">Cost basis: {money.format(data.costBasis)}</div>
+		<div class="text-lg font-medium">Cost basis: {formatUsd(data.costBasis)}</div>
 		<div class="text-lg font-medium">
-			Gain: {money.format(data.gain.amount)}
+			Gain: {formatUsd(data.gain.amount)}
 			{#if data.gain.percent !== null}
 				({(data.gain.percent * 100).toFixed(1)}%)
 			{/if}
@@ -77,8 +78,8 @@
 				<tr class="border-b">
 					<td class="py-1">{formatDate(lot.tradeDate)}</td>
 					<td class="py-1">{lot.shares}</td>
-					<td class="py-1">{money.format(lot.pricePerShare)}</td>
-					<td class="py-1">{lot.gain === null ? 'n/a' : money.format(lot.gain)}</td>
+					<td class="py-1">{priceFmt.format(lot.pricePerShare)}</td>
+					<td class="py-1">{lot.gain === null ? 'n/a' : formatUsd(lot.gain)}</td>
 					<td class="py-1">
 						<form method="POST" action="?/removeLot" use:enhance>
 							<input type="hidden" name="lotId" value={lot.id} />
@@ -135,7 +136,7 @@
 		</div>
 		<div class="flex flex-col gap-1">
 			<label for="lot-fee">Fee</label>
-			<input id="lot-fee" name="fee" type="number" step="any" class="rounded border px-2 py-1" />
+			<input id="lot-fee" name="fee" type="number" step="0.01" min="0" class="rounded border px-2 py-1" />
 		</div>
 		<button type="submit">Add purchase</button>
 	</form>

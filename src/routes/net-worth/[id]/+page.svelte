@@ -2,9 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import NetWorthEditor from '$lib/components/NetWorthEditor.svelte';
+	import { formatUsd } from '$lib/money';
 	let { data, form } = $props();
 	let editing = $state(false);
-	const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 	const assets = $derived(data.items.filter((i) => i.side === 'asset'));
 	const liabilities = $derived(data.items.filter((i) => i.side === 'liability'));
@@ -47,7 +47,7 @@
 						<div class="flex items-center gap-2 p-2">
 							<span class="w-32 text-gray-500">{it.category}</span>
 							<span class="flex-1">{it.label}</span>
-							<span class="w-28 text-right">{money.format(it.amount)}</span>
+							<span class="w-28 text-right">{formatUsd(it.amount)}</span>
 						</div>
 					{/each}
 				</div>
@@ -55,8 +55,8 @@
 		{/each}
 
 		<p class="mb-6 text-lg font-medium">
-			Net worth: {money.format(data.totals.net)}
-			<span class="text-sm text-gray-500">({money.format(data.totals.assets)} − {money.format(data.totals.liabilities)})</span>
+			Net worth: {formatUsd(data.totals.net)}
+			<span class="text-sm text-gray-500">({formatUsd(data.totals.assets)} − {formatUsd(data.totals.liabilities)})</span>
 		</p>
 
 		<div class="flex items-center gap-2">

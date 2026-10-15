@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { netWorthTotals, type NetWorthRow } from '$lib/finance/networth';
+	import { formatUsd } from '$lib/money';
 
 	let {
 		initialRows,
@@ -14,7 +15,6 @@
 	} = $props();
 
 	let rows = $state<NetWorthRow[]>(initialRows.map((r) => ({ ...r })));
-	const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 	const totals = $derived(netWorthTotals(rows.map((r) => ({ side: r.side, amount: Number(r.amount) || 0 }))));
 	const assetRows = $derived(rows.filter((r) => r.side === 'asset'));
@@ -54,7 +54,7 @@
 				<div class="flex items-center gap-2">
 					<input bind:value={r.category} list="nw-categories" placeholder="Category" class="w-32 rounded border px-2 py-1" />
 					<input bind:value={r.label} placeholder="Label" class="flex-1 rounded border px-2 py-1" />
-					<input bind:value={r.amount} type="number" step="any" min="0" placeholder="Amount" class="w-32 rounded border px-2 py-1" />
+					<input bind:value={r.amount} type="number" step="0.01" min="0" placeholder="Amount" class="w-32 rounded border px-2 py-1" />
 					<button type="button" onclick={() => removeRow(r)} aria-label="Remove row">✕</button>
 				</div>
 			{/each}
@@ -71,6 +71,6 @@
 </div>
 
 <p class="mb-4 text-lg font-medium">
-	Net worth: {money.format(totals.net)}
-	<span class="text-sm text-gray-500">({money.format(totals.assets)} − {money.format(totals.liabilities)})</span>
+	Net worth: {formatUsd(totals.net)}
+	<span class="text-sm text-gray-500">({formatUsd(totals.assets)} − {formatUsd(totals.liabilities)})</span>
 </p>

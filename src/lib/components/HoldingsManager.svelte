@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { formatUsd } from '$lib/money';
 
 	let {
 		holdings,
@@ -21,11 +22,6 @@
 
 	let editingId = $state<number | null>(null);
 
-	const money = new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		maximumFractionDigits: 0
-	});
 	const sharesFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
 
 	function categoryName(categoryId: number | null) {
@@ -82,7 +78,7 @@
 				<span class="flex-1">{holding.name}</span>
 				<span class="w-32">{categoryName(holding.categoryId)}</span>
 				<span class="w-24">{sharesFmt.format(holding.shares)} sh</span>
-				<span class="w-24">{money.format(holding.currentValue)}</span>
+				<span class="w-24">{formatUsd(holding.currentValue)}</span>
 				<button type="button" onclick={() => (editingId = holding.id)}>Edit</button>
 			{/if}
 			<form method="POST" action="?/refreshHolding" use:enhance class="flex items-center gap-2">

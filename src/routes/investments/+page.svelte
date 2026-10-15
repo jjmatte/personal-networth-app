@@ -4,6 +4,7 @@
 	import HoldingsManager from '$lib/components/HoldingsManager.svelte';
 	import CategoriesManager from '$lib/components/CategoriesManager.svelte';
 	import { enhance } from '$app/forms';
+	import { formatUsd } from '$lib/money';
 
 	let { data, form } = $props();
 
@@ -19,11 +20,6 @@
 
 	const today = new Date().toISOString().slice(0, 10);
 
-	const money = new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		maximumFractionDigits: 0
-	});
 	const moneyPrecise = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
@@ -68,8 +64,8 @@
 		<h1 class="mb-4 text-2xl font-semibold">Dashboard</h1>
 
 		<div class="mb-6 flex items-center gap-6">
-			<div class="text-lg font-medium">Total value: {money.format(data.total)}</div>
-			<div class="text-lg font-medium">Overall gain: {money.format(data.overallGain)}</div>
+			<div class="text-lg font-medium">Total value: {formatUsd(data.total)}</div>
+			<div class="text-lg font-medium">Overall gain: {formatUsd(data.overallGain)}</div>
 			<form method="POST" action="?/refreshPrices">
 				<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">
 					Refresh prices
@@ -94,7 +90,7 @@
 		{#if form?.refreshed?.length}
 			<p class="mb-4 rounded bg-green-100 p-3 text-green-900">
 				{#each form.refreshed as r (r.symbol)}
-					{r.symbol}: {moneyPrecise.format(r.price)}/share — updated to {money.format(r.value)}.
+					{r.symbol}: {moneyPrecise.format(r.price)}/share — updated to {formatUsd(r.value)}.
 				{/each}
 			</p>
 		{/if}
@@ -128,7 +124,7 @@
 				</div>
 				{#if contribution > 0}
 					<p class="mt-2">
-						Put {money.format(contribution)} into <strong>{data.recommended.name}</strong> — it's the
+						Put {formatUsd(contribution)} into <strong>{data.recommended.name}</strong> — it's the
 						most out of sync with its target.
 					</p>
 				{/if}
@@ -152,7 +148,7 @@
 						<td class="py-1">{row.name}</td>
 						<td class="py-1">{row.targetWeight.toFixed(1)}%</td>
 						<td class="py-1">{row.actualPercent.toFixed(1)}%</td>
-						<td class="py-1">{money.format(row.actualValue)}</td>
+						<td class="py-1">{formatUsd(row.actualValue)}</td>
 						<td class="py-1">{row.driftPercent.toFixed(1)}%</td>
 						<td class="py-1">
 							{#if holdingsInCategory(row.categoryId).length > 0}
@@ -164,11 +160,11 @@
 										class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Buy</button
 									>
 									{#if row.deltaValue > 0}
-										<span class="text-sm text-gray-500">{money.format(row.deltaValue)}</span>
+										<span class="text-sm text-gray-500">{formatUsd(row.deltaValue)}</span>
 									{/if}
 								</div>
 							{:else if row.deltaValue > 0}
-								<span class="text-sm text-gray-500">{money.format(row.deltaValue)}</span>
+								<span class="text-sm text-gray-500">{formatUsd(row.deltaValue)}</span>
 							{/if}
 						</td>
 					</tr>
@@ -186,7 +182,7 @@
 						</a>
 						<span class="flex-1">{holding.name}</span>
 						<span class="w-24">{sharesFmt.format(holding.shares)} sh</span>
-						<span class="w-24">{money.format(holding.currentValue)}</span>
+						<span class="w-24">{formatUsd(holding.currentValue)}</span>
 					</div>
 				{/each}
 			</div>
@@ -338,7 +334,7 @@
 					</div>
 					<div class="flex flex-col gap-1">
 						<label for="buy-fee">Fee</label>
-						<input id="buy-fee" name="fee" type="number" step="any" class="rounded border px-2 py-1" />
+						<input id="buy-fee" name="fee" type="number" step="0.01" min="0" class="rounded border px-2 py-1" />
 					</div>
 					<button type="submit">Add purchase</button>
 				</form>
