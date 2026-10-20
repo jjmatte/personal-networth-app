@@ -1,0 +1,90 @@
+import type { PageServerLoad, Actions } from './$types';
+import { fail } from '@sveltejs/kit';
+import { z } from 'zod';
+import {
+	getSettings,
+	setMonthlySpend,
+	listMilestones,
+	createMilestone,
+	updateMilestone,
+	deleteMilestone
+} from '$lib/server/repositories/fire';
+import { latestSnapshot } from '$lib/server/repositories/networth';
+import { listHoldings } from '$lib/server/repositories/holdings';
+import { listAccounts } from '$lib/server/repositories/accounts';
+import { fireNumber, ladderStatus, accessibilitySplit } from '$lib/finance/fire';
+
+const spendSchema = z.object({ monthlySpend: z.coerce.number().finite().nonnegative() });
+const milestoneSchema = z.object({
+	label: z.string().trim().min(1),
+	kind: z.enum(['fixed', 'percent']),
+	value: z.coerce.number().finite().nonnegative(),
+	sortOrder: z.coerce.number().int().min(0).default(0)
+});
+
+export const load: PageServerLoad = async () => {
+	const [{ monthlySpend }, milestones, snapshot, holdings, accounts] = await Promise.all([
+		getSettings(),
+		listMilestones(),
+		latestSnapshot(),
+		listHoldings(),
+		listAccounts()
+	]);
+	const fire = fireNumber(monthlySpend);
+	const netWorth = snapshot?.total ?? 0;
+
+	// One call per milestone so each rung keeps its kind (to flag pending percent rungs).
+	const rungs = milestones
+		.map((m) => ({
+			...ladderStatus([{ ...m, kind: m.kind as 'fixed' | 'percent' }], fire, netWorth)[0],
+			sortOrder: m.sortOrder,
+			pending: m.kind === 'percent' && fire === 0
+		}))
+		.sort((a, b) => a.sortOrder - b.sortOrder || a.target - b.target);
+
+	return {
+		monthlySpend,
+		fireNumber: fire,
+		netWorth,
+		hasSnapshot: !!snapshot,
+		rungs,
+		milestones: milestones.map((m) => ({
+			id: m.id,
+			label: m.label,
+			kind: m.kind,
+			value: m.value,
+			sortOrder: m.sortOrder
+		})),
+		split: accessibilitySplit(accounts, holdings)
+	};
+};
+
+export const actions: Actions = {
+	setSpend: async ({ request }) => {
+		const parsed = spendSchema.safeParse(Object.fromEntries(await request.formData()));
+		if (!parsed.success) return fail(400, { spendError: 'Enter a monthly spend of 0 or more' });
+		await setMonthlySpend(parsed.data.monthlySpend);
+		return { success: true };
+	},
+	createMilestone: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = milestoneSchema.safeParse({ ...form, sortOrder: form.sortOrder || undefined });
+		if (!parsed.success) return fail(400, { milestoneError: 'Invalid milestone' });
+		const existing = await listMilestones();
+		const next = Math.max(-1, ...existing.map((m) => m.sortOrder)) + 1;
+		await createMilestone({ ...parsed.data, sortOrder: form.sortOrder ? parsed.data.sortOrder : next });
+		return { success: true };
+	},
+	updateMilestone: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = milestoneSchema.safeParse({ ...form, sortOrder: form.sortOrder || undefined });
+		if (!parsed.success) return fail(400, { milestoneError: 'Invalid milestone' });
+		await updateMilestone(Number(form.id), parsed.data);
+		return { success: true };
+	},
+	deleteMilestone: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		await deleteMilestone(Number(form.id));
+		return { success: true };
+	}
+};

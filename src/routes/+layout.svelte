@@ -14,6 +14,7 @@
 		<a href="/">Home</a>
 		<a href="/investments">Investments</a>
 		<a href="/net-worth">Net Worth</a>
+		<a href="/fire">FIRE</a>
 		<a href="/purchases">Purchases</a>
 	</div>
 </nav>
