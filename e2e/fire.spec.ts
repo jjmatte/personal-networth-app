@@ -36,6 +36,17 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 		await addMilestone(page, 'E2E Low', 'fixed', '1000');
 		await addMilestone(page, 'E2E High', 'fixed', '100000');
 		await addMilestone(page, 'E2E Half', 'percent', '50');
+		await addMilestone(page, 'E2E Negative', 'fixed', '-5000');
+		await expect(page.getByTestId('rung').filter({ hasText: 'E2E Negative' })).toContainText('Complete');
+
+		// A negative percent rung is still rejected.
+		const add = page.getByTestId('add-milestone');
+		await add.getByLabel('Label').fill('E2E BadPct');
+		await add.getByLabel('Kind').selectOption('percent');
+		await add.getByLabel('Value').fill('-5');
+		await add.getByRole('button', { name: 'Add milestone' }).click();
+		await expect(page.getByText('Invalid milestone')).toBeVisible();
+		await expect(page.getByTestId('rung').filter({ hasText: 'E2E BadPct' })).toHaveCount(0);
 
 		await page.getByLabel('Monthly spend').fill('4000');
 		await page.getByRole('button', { name: 'Save spend' }).click();
@@ -63,7 +74,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 	} finally {
 		try {
 			await page.goto('/fire');
-			for (const label of ['E2E Low', 'E2E High', 'E2E Half']) {
+			for (const label of ['E2E Low', 'E2E High', 'E2E Half', 'E2E Negative']) {
 				const r = page.locator(`[data-testid="milestone-row"][data-label="${label}"]`);
 				if ((await r.count()) > 0) {
 					await r.getByRole('button', { name: 'Delete' }).click();

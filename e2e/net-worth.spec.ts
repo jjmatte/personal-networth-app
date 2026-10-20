@@ -65,44 +65,49 @@ test('history shows per-snapshot gain, running total, and first-snapshot marker'
 		{ date: '1990-04-01', amount: '1700' },
 		{ date: '1990-07-01', amount: '1500' }
 	];
-	for (const s of series) {
-		await page.goto('/net-worth/new');
-		for (const btn = page.getByRole('button', { name: 'Remove row' }); (await btn.count()) > 0; ) {
-			await btn.first().click();
-		}
-		await page.getByRole('button', { name: 'Add asset' }).click();
-		const row = page.locator('section', { hasText: 'Assets' }).locator('div.flex.items-center').last();
-		await row.getByPlaceholder('Category').fill('Cash');
-		await row.getByPlaceholder('Label').fill('Checking');
-		await row.getByPlaceholder('Amount').fill(s.amount);
-		await page.locator('#nw-date').fill(s.date);
-		await page.getByRole('button', { name: 'Save snapshot' }).click();
-		await expect(page).toHaveURL(/\/net-worth\/\d+$/);
-	}
-
-	await page.goto('/net-worth');
 	const rowFor = (label: string) => page.getByRole('link', { name: new RegExp(label) });
 
-	const first = rowFor('Jan 1, 1990');
-	await expect(first).toContainText('First snapshot');
-	await expect(first).not.toContainText('NaN');
-	await expect(first.getByTestId('period-gain')).toHaveCount(0);
+	try {
+		for (const s of series) {
+			await page.goto('/net-worth/new');
+			for (const btn = page.getByRole('button', { name: 'Remove row' }); (await btn.count()) > 0; ) {
+				await btn.first().click();
+			}
+			await page.getByRole('button', { name: 'Add asset' }).click();
+			const row = page.locator('section', { hasText: 'Assets' }).locator('div.flex.items-center').last();
+			await row.getByPlaceholder('Category').fill('Cash');
+			await row.getByPlaceholder('Label').fill('Checking');
+			await row.getByPlaceholder('Amount').fill(s.amount);
+			await page.locator('#nw-date').fill(s.date);
+			await page.getByRole('button', { name: 'Save snapshot' }).click();
+			await expect(page).toHaveURL(/\/net-worth\/\d+$/);
+		}
 
-	const second = rowFor('Apr 1, 1990');
-	await expect(second.getByTestId('period-gain')).toHaveText('+$700.00');
-	await expect(second.getByTestId('running-gain')).toHaveText('+$700.00');
+		await page.goto('/net-worth');
+		const first = rowFor('Jan 1, 1990');
+		await expect(first).toContainText('First snapshot');
+		await expect(first).not.toContainText('NaN');
+		await expect(first.getByTestId('period-gain')).toHaveCount(0);
 
-	const third = rowFor('Jul 1, 1990');
-	await expect(third.getByTestId('period-gain')).toHaveText('-$200.00');
-	await expect(third.getByTestId('running-gain')).toHaveText('+$500.00');
+		const second = rowFor('Apr 1, 1990');
+		await expect(second.getByTestId('period-gain')).toHaveText('+$700.00');
+		await expect(second.getByTestId('running-gain')).toHaveText('+$700.00');
 
-	await expect(page.getByTestId('best-period')).toContainText('Best period gain');
+		const third = rowFor('Jul 1, 1990');
+		await expect(third.getByTestId('period-gain')).toHaveText('-$200.00');
+		await expect(third.getByTestId('running-gain')).toHaveText('+$500.00');
 
-	// Clean up so later tests see only their own data.
-	page.on('dialog', (d) => d.accept());
-	for (const label of ['Jul 1, 1990', 'Apr 1, 1990', 'Jan 1, 1990']) {
-		await rowFor(label).click();
-		await page.getByRole('button', { name: 'Delete' }).click();
-		await expect(page).toHaveURL(/\/net-worth$/);
+		await expect(page.getByTestId('best-period')).toContainText(/Best period gain:\s*\+?\$[\d,]+\.\d{2}/);
+
+	} finally {
+		// Clean up so later tests see only their own data, even if an assertion threw.
+		page.on('dialog', (d) => d.accept());
+		await page.goto('/net-worth');
+		for (const label of ['Jul 1, 1990', 'Apr 1, 1990', 'Jan 1, 1990']) {
+			if ((await rowFor(label).count()) === 0) continue;
+			await rowFor(label).click();
+			await page.getByRole('button', { name: 'Delete' }).click();
+			await expect(page).toHaveURL(/\/net-worth$/);
+		}
 	}
 });

@@ -14,15 +14,18 @@ import { listHoldings } from '$lib/server/repositories/holdings';
 import { listAccounts } from '$lib/server/repositories/accounts';
 import { fireNumber, ladderStatus, accessibilitySplit } from '$lib/finance/fire';
 
+const nonEmptyFinite = z.string().trim().min(1).pipe(z.coerce.number().finite());
 const nonEmptyNumber = z.string().trim().min(1).pipe(z.coerce.number().finite().nonnegative());
 const idSchema = z.coerce.number().int().positive();
 const spendSchema = z.object({ monthlySpend: nonEmptyNumber });
-const milestoneSchema = z.object({
-	label: z.string().trim().min(1),
-	kind: z.enum(['fixed', 'percent']),
-	value: nonEmptyNumber,
-	sortOrder: z.coerce.number().int().min(0).optional()
-});
+const milestoneSchema = z
+	.object({
+		label: z.string().trim().min(1),
+		kind: z.enum(['fixed', 'percent']),
+		value: nonEmptyFinite,
+		sortOrder: z.coerce.number().int().min(0).optional()
+	})
+	.refine((m) => m.kind === 'fixed' || m.value >= 0, { path: ['value'] });
 
 export const load: PageServerLoad = async () => {
 	const [{ monthlySpend }, milestones, snapshot, holdings, accounts] = await Promise.all([

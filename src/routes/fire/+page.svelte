@@ -84,7 +84,6 @@
 						type="number"
 						name="value"
 						aria-label="Value"
-						min="0"
 						step="any"
 						value={m.value}
 						required
@@ -121,7 +120,6 @@
 				name="value"
 				aria-label="Value"
 				placeholder="Value"
-				min="0"
 				step="any"
 				required
 				class="w-28 rounded border px-2 py-1"
