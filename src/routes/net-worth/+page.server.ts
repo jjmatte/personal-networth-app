@@ -1,12 +1,16 @@
 import type { PageServerLoad } from './$types';
 import { listSnapshots } from '$lib/server/repositories/networth';
+import { gainVsPrevious, runningTotalGain, bestQuarterGain } from '$lib/finance/snapshot-stats';
 
 export const load: PageServerLoad = async () => {
-  const snaps = await listSnapshots(); // newest first
+  const newestFirst = await listSnapshots();
+  const ascending = [...newestFirst].reverse(); // takenAt asc, id asc
   return {
-    snapshots: snaps.map((s, i) => ({
+    snapshots: newestFirst.map((s) => ({
       ...s,
-      delta: i + 1 < snaps.length ? s.total - snaps[i + 1].total : null
-    }))
+      delta: gainVsPrevious(ascending, s.id),
+      runningGain: runningTotalGain(ascending, s.id)
+    })),
+    bestPeriodGain: bestQuarterGain(ascending)
   };
 };
