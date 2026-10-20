@@ -4,7 +4,7 @@ import { netWorthSnapshot, netWorthItem } from '../db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { listHoldings } from './holdings';
 import { totalValue } from '$lib/finance/gains';
-import { floorToCents } from '$lib/money';
+import { truncToCents } from '$lib/money';
 import { netWorthTotals, reconcileInvestmentLine, type NetWorthRow } from '$lib/finance/networth';
 
 export interface SnapshotInput {
@@ -101,7 +101,7 @@ export async function distinctCategories(): Promise<string[]> {
 
 export async function buildPrefill(fromId?: number) {
   const holdings = await listHoldings();
-  const portfolioTotal = floorToCents(totalValue(holdings));
+  const portfolioTotal = truncToCents(totalValue(holdings));
   const source = fromId
     ? await getSnapshot(fromId)
     : await (async () => {

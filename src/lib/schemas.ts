@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { floorToCents } from './money';
+import { truncToCents } from './money';
 
 const positive = z.coerce.number().finite().nonnegative();
-const dollars = positive.transform(floorToCents);
+const dollars = positive.transform(truncToCents);
 
 export const categorySchema = z.object({
   name: z.string().min(1),
