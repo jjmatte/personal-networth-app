@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { makeTestDb } from './test-harness';
 import { createHolding } from './holdings';
+import { createAccount } from './accounts';
 import {
   createSnapshot, getSnapshot, listSnapshots, latestSnapshot,
   updateSnapshot, deleteSnapshot, distinctCategories, buildPrefill
@@ -74,33 +75,45 @@ describe('networth repository', () => {
     expect(cats).toContain('Real Estate');
   });
 
-  it('buildPrefill seeds the Investments line from the live portfolio when there is no prior snapshot', async () => {
-    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 1960 });
+  it('buildPrefill seeds per-account Investments lines when there is no prior snapshot', async () => {
+    const k = await createAccount({ name: '401k', type: 'retirement', accessible: false, sortOrder: 0 });
+    const t = await createAccount({ name: 'Brokerage', type: 'taxable', accessible: true, sortOrder: 1 });
+    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 1000, accountId: k.id });
+    await createHolding({ symbol: 'VTI', name: 'Total Market', categoryId: null, currentValue: 960, accountId: t.id });
     const pre = await buildPrefill();
-    const inv = pre.rows.find((r) => r.category === INVESTMENTS_LINE.category);
-    expect(inv).toMatchObject({ side: 'asset', amount: 1960 });
+    const inv = pre.rows.filter((r) => r.category === 'Investments');
+    expect(inv.map((r) => [r.label, r.amount])).toEqual([['401k', 1000], ['Brokerage', 960]]);
+    expect(pre.rows.some((r) => r.label === INVESTMENTS_LINE.label)).toBe(false);
   });
 
-  it('buildPrefill floors the Investments line down to the cent', async () => {
-    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 239070.15564999997 });
+  it('buildPrefill floors each Investments line down to the cent', async () => {
+    const k = await createAccount({ name: '401k', type: 'retirement', accessible: false, sortOrder: 0 });
+    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 239070.15564999997, accountId: k.id });
     const pre = await buildPrefill();
-    const inv = pre.rows.find((r) => r.category === INVESTMENTS_LINE.category);
-    expect(inv!.amount).toBe(239070.15);
+    expect(pre.rows.find((r) => r.label === '401k')!.amount).toBe(239070.15);
   });
 
-  it('buildPrefill carries forward the latest snapshot and refreshes the Investments amount', async () => {
-    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 500 });
+  it('buildPrefill refreshes derived lines, drops stale ones, and keeps manual Investments lines', async () => {
+    const k = await createAccount({ name: '401k', type: 'retirement', accessible: false, sortOrder: 0 });
+    await createHolding({ symbol: 'VOO', name: 'S&P 500', categoryId: null, currentValue: 500, accountId: k.id });
+    await createHolding({ symbol: 'VTI', name: 'Total Market', categoryId: null, currentValue: 70 });
     await createSnapshot({
       takenAt: new Date('2026-01-01'),
       items: [
-        row({ ...INVESTMENTS_LINE, side: 'asset', amount: 100 }),
+        row({ ...INVESTMENTS_LINE, amount: 100 }),
+        row({ category: 'Investments', label: '401k', amount: 100 }),
+        row({ category: 'Investments', label: 'Metals', amount: 3000 }),
         row({ category: 'Cash', label: 'Checking', amount: 8400 })
       ]
     });
     const pre = await buildPrefill();
-    expect(pre.rows.find((r) => r.category === 'Investments')!.amount).toBe(500);
+    const inv = pre.rows.filter((r) => r.category === 'Investments');
+    expect(inv.map((r) => [r.label, r.amount]).sort()).toEqual(
+      [['401k', 500], ['Metals', 3000], ['Unassigned', 70]].sort()
+    );
     expect(pre.rows.find((r) => r.category === 'Cash')!.amount).toBe(8400);
   });
+
   it('buildPrefill(fromId) copies the specified snapshot, not the latest', async () => {
     const older = await createSnapshot({
       takenAt: new Date('2026-01-01'),

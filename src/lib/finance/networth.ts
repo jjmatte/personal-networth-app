@@ -25,24 +25,6 @@ export function netWorthTotals(items: { side: NetWorthSide; amount: number }[]):
   return { assets, liabilities, net: assets - liabilities };
 }
 
-function isInvestmentsLine(r: NetWorthRow): boolean {
-  return r.category === INVESTMENTS_LINE.category && r.label === INVESTMENTS_LINE.label;
-}
-
-export function reconcileInvestmentLine(rows: NetWorthRow[], portfolioTotal: number): NetWorthRow[] {
-  if (rows.some(isInvestmentsLine)) {
-    return rows.map((r) => (isInvestmentsLine(r) ? { ...r, amount: portfolioTotal } : r));
-  }
-  const seeded: NetWorthRow = {
-    side: 'asset',
-    category: INVESTMENTS_LINE.category,
-    label: INVESTMENTS_LINE.label,
-    amount: portfolioTotal,
-    sortOrder: 0
-  };
-  return [seeded, ...rows];
-}
-
 export function investmentLinesByAccount(
   holdings: { accountId: number | null; currentValue: number }[],
   accounts: { id: number; name: string }[]

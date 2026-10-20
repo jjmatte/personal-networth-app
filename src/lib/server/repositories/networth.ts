@@ -3,9 +3,9 @@ import { db } from '../db';
 import { netWorthSnapshot, netWorthItem } from '../db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { listHoldings } from './holdings';
-import { totalValue } from '$lib/finance/gains';
+import { listAccounts } from './accounts';
 import { truncToCents } from '$lib/money';
-import { netWorthTotals, reconcileInvestmentLine, type NetWorthRow } from '$lib/finance/networth';
+import { netWorthTotals, investmentLinesByAccount, INVESTMENTS_LINE, type NetWorthRow } from '$lib/finance/networth';
 
 export interface SnapshotInput {
   takenAt: Date;
@@ -101,7 +101,7 @@ export async function distinctCategories(): Promise<string[]> {
 
 export async function buildPrefill(fromId?: number) {
   const holdings = await listHoldings();
-  const portfolioTotal = truncToCents(totalValue(holdings));
+  const accounts = await listAccounts();
   const source = fromId
     ? await getSnapshot(fromId)
     : await (async () => {
@@ -122,9 +122,13 @@ export async function buildPrefill(fromId?: number) {
         { side: 'liability', category: 'Loans', label: '', amount: 0, sortOrder: 0 }
       ];
 
+  const derivedLabels = new Set([...accounts.map((a) => a.name), 'Unassigned', INVESTMENTS_LINE.label]);
+  const carried = baseRows.filter((r) => !(r.category === INVESTMENTS_LINE.category && derivedLabels.has(r.label)));
+  const derived = investmentLinesByAccount(holdings, accounts).map((r) => ({ ...r, amount: truncToCents(r.amount) }));
+
   return {
     takenAt: new Date(),
-    rows: reconcileInvestmentLine(baseRows, portfolioTotal),
+    rows: [...carried, ...derived],
     categories: await distinctCategories()
   };
 }
