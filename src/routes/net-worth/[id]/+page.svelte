@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import NetWorthEditor from '$lib/components/NetWorthEditor.svelte';
 	import { formatUsd } from '$lib/money';
 	let { data, form } = $props();
@@ -15,17 +14,14 @@
 		<h1 class="text-2xl font-semibold">Net worth — {dateFmt.format(new Date(data.snapshot.takenAt))}</h1>
 		<a href={`/net-worth/new?from=${data.snapshot.id}`} class="rounded border px-3 py-1 text-sm hover:bg-gray-50">New from this</a>
 	</div>
-	{#if form?.error}<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.error}</p>{/if}
 	{#if editing}
+		{#if form?.error}<p class="mb-4 rounded bg-red-100 p-3 text-red-900">{form.error}</p>{/if}
 		<form
 			method="POST"
 			action="?/update"
 			use:enhance={() => async ({ result, update }) => {
 				await update({ reset: false });
-				if (result.type === 'success') {
-					await invalidateAll();
-					editing = false;
-				}
+				if (result.type === 'success') editing = false;
 			}}
 		>
 			<NetWorthEditor

@@ -4,8 +4,14 @@ import { getSnapshot, deleteSnapshot, updateSnapshot } from '$lib/server/reposit
 import { netWorthSnapshotSchema } from '$lib/schemas';
 import { netWorthTotals } from '$lib/finance/networth';
 
+function snapshotId(id: string): number {
+  const n = Number(id);
+  if (!Number.isInteger(n)) throw error(404, 'Snapshot not found');
+  return n;
+}
+
 export const load: PageServerLoad = async ({ params }) => {
-  const got = await getSnapshot(Number(params.id));
+  const got = await getSnapshot(snapshotId(params.id));
   if (!got) throw error(404, 'Snapshot not found');
   const totals = netWorthTotals(got.items.map((i) => ({ side: i.side as 'asset' | 'liability', amount: i.amount })));
   return { snapshot: got.snapshot, items: got.items, totals };
@@ -22,11 +28,11 @@ export const actions: Actions = {
     }
     const parsed = netWorthSnapshotSchema.safeParse({ takenAt: form.takenAt, note: form.note || undefined, items });
     if (!parsed.success) return fail(400, { error: 'Add at least one line item with a label and amount.' });
-    await updateSnapshot(Number(params.id), parsed.data);
+    await updateSnapshot(snapshotId(params.id), parsed.data);
     return { success: true };
   },
   delete: async ({ params }) => {
-    await deleteSnapshot(Number(params.id));
+    await deleteSnapshot(snapshotId(params.id));
     throw redirect(303, '/net-worth');
   }
 };

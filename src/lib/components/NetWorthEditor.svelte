@@ -14,6 +14,8 @@
 		categories?: string[];
 	} = $props();
 
+	// Seed-once from the prop on mount; the editor owns its rows thereafter.
+	// svelte-ignore state_referenced_locally
 	let rows = $state<NetWorthRow[]>(initialRows.map((r) => ({ ...r })));
 
 	const totals = $derived(netWorthTotals(rows.map((r) => ({ side: r.side, amount: Number(r.amount) || 0 }))));
