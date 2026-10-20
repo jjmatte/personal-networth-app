@@ -21,25 +21,29 @@ import { holdingSchema, categorySchema, lotSchema } from '$lib/schemas';
 import type { Lot } from '$lib/finance/types';
 
 export const load: PageServerLoad = async () => {
-	const categories = await listCategories();
-	const holdings = await listHoldings();
+	const [categories, holdings] = await Promise.all([listCategories(), listHoldings()]);
 	const cats = categories.map((c) => ({ id: c.id, name: c.name, targetWeight: c.targetWeight }));
 	const forAlloc = holdings.map((h) => ({ categoryId: h.categoryId, currentValue: h.currentValue }));
 
-	const holdingInputs = [];
-	const sharesByHolding = new Map<number, number>();
-	for (const h of holdings) {
-		const rows = await listLots(h.id);
-		const lots: Lot[] = rows.map((l) => ({ shares: l.shares, pricePerShare: l.pricePerShare, fee: l.fee ?? undefined }));
-		holdingInputs.push({ currentValue: h.currentValue, lots });
-		sharesByHolding.set(h.id, totalShares(lots));
-	}
+	// Fetch every holding's lots and history in parallel rather than serially (was an N+1).
+	const [lotsByHolding, historyByHolding] = await Promise.all([
+		Promise.all(holdings.map((h) => listLots(h.id))),
+		Promise.all(holdings.map((h) => holdingHistory(h.id)))
+	]);
 
-	const series = [];
-	for (const h of holdings) {
-		const points = await holdingHistory(h.id);
-		series.push({ symbol: h.symbol, points: points.map((p) => ({ t: p.recordedAt, value: p.value })) });
-	}
+	const holdingInputs = holdings.map((h, i) => ({
+		currentValue: h.currentValue,
+		lots: lotsByHolding[i].map(
+			(l): Lot => ({ shares: l.shares, pricePerShare: l.pricePerShare, fee: l.fee ?? undefined })
+		)
+	}));
+	const sharesByHolding = new Map<number, number>(
+		holdings.map((h, i) => [h.id, totalShares(holdingInputs[i].lots)])
+	);
+	const series = holdings.map((h, i) => ({
+		symbol: h.symbol,
+		points: historyByHolding[i].map((p) => ({ t: p.recordedAt, value: p.value }))
+	}));
 
 	const rows = allocation(cats, forAlloc);
 	const recommended = mostUnderweight(rows);
