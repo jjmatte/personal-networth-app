@@ -26,3 +26,17 @@ export function ladderStatus(milestones: Milestone[], fire: number, netWorth: nu
     .sort((a, b) => a.sortOrder - b.sortOrder || a.target - b.target)
     .map(({ sortOrder: _s, ...rung }) => rung);
 }
+
+export function accessibilitySplit(
+  accounts: { id: number; accessible: boolean }[],
+  holdings: { accountId: number | null; currentValue: number }[]
+): { accessible: number; locked: number } {
+  const accessibleIds = new Set(accounts.filter((a) => a.accessible).map((a) => a.id));
+  let accessible = 0;
+  let locked = 0;
+  for (const h of holdings) {
+    if (h.accountId !== null && accessibleIds.has(h.accountId)) accessible += h.currentValue;
+    else locked += h.currentValue;
+  }
+  return { accessible, locked };
+}

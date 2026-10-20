@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fireNumber, milestoneTarget, ladderStatus } from './fire';
+import { fireNumber, milestoneTarget, ladderStatus, accessibilitySplit } from './fire';
 
 const ms = [
   { kind: 'percent' as const, value: 50, label: 'Half', sortOrder: 2 },
@@ -47,5 +47,38 @@ describe('fire', () => {
     const s = ladderStatus(rungs, 1_000_000, -1000);
     expect(s.filter((r) => r.complete).map((r) => r.label)).toEqual(['Debt free-ish']);
     expect(s.find((r) => r.label === 'Zero')!.amountToNext).toBe(1000);
+  });
+
+  describe('accessibilitySplit', () => {
+    const accounts = [
+      { id: 1, accessible: true },
+      { id: 2, accessible: false }
+    ];
+
+    it('splits holdings by account accessibility', () => {
+      const holdings = [
+        { accountId: 1, currentValue: 1000 },
+        { accountId: 2, currentValue: 5000 },
+        { accountId: 1, currentValue: 250 }
+      ];
+      expect(accessibilitySplit(accounts, holdings)).toEqual({ accessible: 1250, locked: 5000 });
+    });
+
+    it('counts null-account holdings as locked', () => {
+      expect(accessibilitySplit(accounts, [{ accountId: null, currentValue: 700 }])).toEqual({
+        accessible: 0,
+        locked: 700
+      });
+    });
+
+    it('counts orphan accountId as locked so the total is preserved', () => {
+      const holdings = [
+        { accountId: 1, currentValue: 100 },
+        { accountId: 99, currentValue: 400 }
+      ];
+      const r = accessibilitySplit(accounts, holdings);
+      expect(r).toEqual({ accessible: 100, locked: 400 });
+      expect(r.accessible + r.locked).toBe(500);
+    });
   });
 });
