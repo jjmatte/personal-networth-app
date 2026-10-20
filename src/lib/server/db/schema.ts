@@ -62,3 +62,16 @@ export const netWorthItem = sqliteTable('net_worth_item', {
   amount: real('amount').notNull(),
   sortOrder: integer('sort_order').notNull().default(0)
 });
+
+export const settings = sqliteTable('settings', {
+  id: integer('id').primaryKey(),
+  monthlySpend: real('monthly_spend').notNull().default(0)
+});
+
+export const fireMilestone = sqliteTable('fire_milestone', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  label: text('label').notNull(),
+  kind: text('kind').notNull(),
+  value: real('value').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0)
+});
