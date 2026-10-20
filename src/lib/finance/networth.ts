@@ -42,3 +42,33 @@ export function reconcileInvestmentLine(rows: NetWorthRow[], portfolioTotal: num
   };
   return [seeded, ...rows];
 }
+
+export function investmentLinesByAccount(
+  holdings: { accountId: number | null; currentValue: number }[],
+  accounts: { id: number; name: string }[]
+): NetWorthRow[] {
+  const byAccount = new Map<number, number>();
+  let unassigned = 0;
+  let hasUnassigned = false;
+  for (const h of holdings) {
+    if (h.accountId === null) {
+      unassigned += h.currentValue;
+      hasUnassigned = true;
+    } else {
+      byAccount.set(h.accountId, (byAccount.get(h.accountId) ?? 0) + h.currentValue);
+    }
+  }
+  const lines: { label: string; amount: number }[] = [];
+  for (const a of accounts) {
+    const amount = byAccount.get(a.id);
+    if (amount !== undefined) lines.push({ label: a.name, amount });
+  }
+  if (hasUnassigned) lines.push({ label: 'Unassigned', amount: unassigned });
+  return lines.map((l, i) => ({
+    side: 'asset',
+    category: INVESTMENTS_LINE.category,
+    label: l.label,
+    amount: l.amount,
+    sortOrder: i
+  }));
+}
