@@ -14,12 +14,14 @@ import { listHoldings } from '$lib/server/repositories/holdings';
 import { listAccounts } from '$lib/server/repositories/accounts';
 import { fireNumber, ladderStatus, accessibilitySplit } from '$lib/finance/fire';
 
-const spendSchema = z.object({ monthlySpend: z.coerce.number().finite().nonnegative() });
+const nonEmptyNumber = z.string().trim().min(1).pipe(z.coerce.number().finite().nonnegative());
+const idSchema = z.coerce.number().int().positive();
+const spendSchema = z.object({ monthlySpend: nonEmptyNumber });
 const milestoneSchema = z.object({
 	label: z.string().trim().min(1),
 	kind: z.enum(['fixed', 'percent']),
-	value: z.coerce.number().finite().nonnegative(),
-	sortOrder: z.coerce.number().int().min(0).default(0)
+	value: nonEmptyNumber,
+	sortOrder: z.coerce.number().int().min(0).optional()
 });
 
 export const load: PageServerLoad = async () => {
@@ -72,19 +74,28 @@ export const actions: Actions = {
 		if (!parsed.success) return fail(400, { milestoneError: 'Invalid milestone' });
 		const existing = await listMilestones();
 		const next = Math.max(-1, ...existing.map((m) => m.sortOrder)) + 1;
-		await createMilestone({ ...parsed.data, sortOrder: form.sortOrder ? parsed.data.sortOrder : next });
+		await createMilestone({ ...parsed.data, sortOrder: parsed.data.sortOrder ?? next });
 		return { success: true };
 	},
 	updateMilestone: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
 		const parsed = milestoneSchema.safeParse({ ...form, sortOrder: form.sortOrder || undefined });
 		if (!parsed.success) return fail(400, { milestoneError: 'Invalid milestone' });
-		await updateMilestone(Number(form.id), parsed.data);
+		const id = idSchema.safeParse(form.id);
+		if (!id.success) return fail(400, { milestoneError: 'Invalid milestone' });
+		const current = (await listMilestones()).find((m) => m.id === id.data);
+		if (!current) return fail(400, { milestoneError: 'Invalid milestone' });
+		await updateMilestone(id.data, {
+			...parsed.data,
+			sortOrder: parsed.data.sortOrder ?? current.sortOrder
+		});
 		return { success: true };
 	},
 	deleteMilestone: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
-		await deleteMilestone(Number(form.id));
+		const id = idSchema.safeParse(form.id);
+		if (!id.success) return fail(400, { milestoneError: 'Invalid milestone' });
+		await deleteMilestone(id.data);
 		return { success: true };
 	}
 };
