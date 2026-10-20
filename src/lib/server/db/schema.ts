@@ -7,12 +7,21 @@ export const category = sqliteTable('category', {
   sortOrder: integer('sort_order').notNull().default(0)
 });
 
+export const account = sqliteTable('account', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  type: text('type').notNull(),
+  accessible: integer('accessible', { mode: 'boolean' }).notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0)
+});
+
 export const holding = sqliteTable('holding', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   symbol: text('symbol').notNull(),
   name: text('name').notNull(),
   kind: text('kind').notNull().default('equity'),
   categoryId: integer('category_id').references(() => category.id, { onDelete: 'set null' }),
+  accountId: integer('account_id').references(() => account.id, { onDelete: 'set null' }),
   currentValue: real('current_value').notNull().default(0),
   lastPrice: real('last_price'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
