@@ -31,5 +31,5 @@ test('dashboard recommends the most out-of-sync category for a contribution', as
 
 	await page.goto('/investments');
 	await page.getByLabel('Monthly contribution').fill('500');
-	await expect(page.getByText(/put \$500 into/i)).toContainText('Beta');
+	await expect(page.getByText(/put \$500\.00 into/i)).toContainText('Beta');
 });
