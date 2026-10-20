@@ -13,15 +13,20 @@ import {
 	updateHolding,
 	refreshHoldingValue
 } from '$lib/server/repositories/holdings';
+import { listAccounts, createAccount, updateAccount, deleteAccount } from '$lib/server/repositories/accounts';
 import { listLots, addLotAndRefresh } from '$lib/server/repositories/lots';
 import { holdingHistory } from '$lib/server/repositories/history';
 import { allocation, targetsSum, mostUnderweight } from '$lib/finance/allocation';
 import { totalValue, overallGain, totalShares } from '$lib/finance/gains';
-import { holdingSchema, categorySchema, lotSchema } from '$lib/schemas';
+import { holdingSchema, categorySchema, accountSchema, lotSchema } from '$lib/schemas';
 import type { Lot } from '$lib/finance/types';
 
 export const load: PageServerLoad = async () => {
-	const [categories, holdings] = await Promise.all([listCategories(), listHoldings()]);
+	const [categories, holdings, accounts] = await Promise.all([
+		listCategories(),
+		listHoldings(),
+		listAccounts()
+	]);
 	const cats = categories.map((c) => ({ id: c.id, name: c.name, targetWeight: c.targetWeight }));
 	const forAlloc = holdings.map((h) => ({ categoryId: h.categoryId, currentValue: h.currentValue }));
 
@@ -52,12 +57,14 @@ export const load: PageServerLoad = async () => {
 		rows,
 		series,
 		categories,
+		accounts,
 		holdings: holdings.map((h) => ({
 			id: h.id,
 			symbol: h.symbol,
 			name: h.name,
 			kind: h.kind,
 			categoryId: h.categoryId,
+			accountId: h.accountId,
 			currentValue: h.currentValue,
 			shares: sharesByHolding.get(h.id) ?? 0
 		})),
@@ -85,7 +92,7 @@ export const actions: Actions = {
 	},
 	createHolding: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
-		const parsed = holdingSchema.safeParse({ ...form, categoryId: form.categoryId || null });
+		const parsed = holdingSchema.safeParse({ ...form, categoryId: form.categoryId || null, accountId: form.accountId || null });
 		if (!parsed.success) return fail(400, { holdingError: 'Invalid holding' });
 		await createHolding(parsed.data);
 		return { success: true };
@@ -94,7 +101,7 @@ export const actions: Actions = {
 		const form = Object.fromEntries(await request.formData());
 		const parsed = holdingSchema
 			.omit({ currentValue: true })
-			.safeParse({ ...form, categoryId: form.categoryId || null });
+			.safeParse({ ...form, categoryId: form.categoryId || null, accountId: form.accountId || null });
 		if (!parsed.success) return fail(400, { holdingError: 'Invalid holding' });
 		await updateHolding(Number(form.id), parsed.data);
 		return { success: true };
@@ -134,6 +141,25 @@ export const actions: Actions = {
 	deleteCategory: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
 		await deleteCategory(Number(form.id));
+		return { success: true };
+	},
+	createAccount: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = accountSchema.safeParse({ ...form, accessible: form.accessible === 'on' });
+		if (!parsed.success) return fail(400, { accountError: 'Invalid account' });
+		await createAccount(parsed.data);
+		return { success: true };
+	},
+	updateAccount: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const parsed = accountSchema.safeParse({ ...form, accessible: form.accessible === 'on' });
+		if (!parsed.success) return fail(400, { accountError: 'Invalid account' });
+		await updateAccount(Number(form.id), parsed.data);
+		return { success: true };
+	},
+	deleteAccount: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		await deleteAccount(Number(form.id));
 		return { success: true };
 	},
 	buy: async ({ request }) => {

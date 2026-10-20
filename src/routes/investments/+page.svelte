@@ -2,6 +2,7 @@
 	import AllocationChart from '$lib/components/AllocationChart.svelte';
 	import HistoryChart from '$lib/components/HistoryChart.svelte';
 	import HoldingsManager from '$lib/components/HoldingsManager.svelte';
+	import AccountsManager from '$lib/components/AccountsManager.svelte';
 	import CategoriesManager from '$lib/components/CategoriesManager.svelte';
 	import { enhance } from '$app/forms';
 	import { formatUsd } from '$lib/money';
@@ -11,6 +12,7 @@
 	let contribution = $state(0);
 	let holdingsDialog: HTMLDialogElement;
 	let categoriesDialog: HTMLDialogElement;
+	let accountsDialog: HTMLDialogElement;
 	let buyDialog: HTMLDialogElement;
 	let buyCategory = $state<{ id: number | null; name: string } | null>(null);
 	let buyHoldingId = $state<number | null>(null);
@@ -84,6 +86,13 @@
 				class="rounded border px-3 py-1 text-sm hover:bg-gray-50"
 			>
 				Manage categories
+			</button>
+			<button
+				type="button"
+				onclick={() => accountsDialog.showModal()}
+				class="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+			>
+				Manage accounts
 			</button>
 		</div>
 
@@ -213,7 +222,12 @@
 					class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Close</button
 				>
 			</div>
-			<HoldingsManager holdings={data.holdings} categories={data.categories} {form} />
+			<HoldingsManager
+				holdings={data.holdings}
+				categories={data.categories}
+				accounts={data.accounts}
+				{form}
+			/>
 		</div>
 	</dialog>
 
@@ -231,6 +245,23 @@
 				>
 			</div>
 			<CategoriesManager categories={data.categories} targetsSum={data.targetsSum} {form} />
+		</div>
+	</dialog>
+
+	<dialog
+		bind:this={accountsDialog}
+		class="w-full max-w-xl rounded-lg p-0 backdrop:bg-black/40"
+	>
+		<div class="max-h-[85vh] overflow-auto p-6">
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-xl font-semibold">Manage accounts</h2>
+				<button
+					type="button"
+					onclick={() => accountsDialog.close()}
+					class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Close</button
+				>
+			</div>
+			<AccountsManager accounts={data.accounts} {form} />
 		</div>
 	</dialog>
 

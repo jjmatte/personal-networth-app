@@ -5,6 +5,7 @@
 	let {
 		holdings,
 		categories,
+		accounts,
 		form
 	}: {
 		holdings: {
@@ -13,10 +14,12 @@
 			name: string;
 			kind: string;
 			categoryId: number | null;
+			accountId: number | null;
 			currentValue: number;
 			shares: number;
 		}[];
 		categories: { id: number; name: string }[];
+		accounts: { id: number; name: string }[];
 		form: { holdingError?: string; priceWarning?: boolean } | null;
 	} = $props();
 
@@ -27,6 +30,11 @@
 	function categoryName(categoryId: number | null) {
 		if (categoryId === null) return 'Uncategorized';
 		return categories.find((c) => c.id === categoryId)?.name ?? 'Uncategorized';
+	}
+
+	function accountName(accountId: number | null) {
+		if (accountId === null) return 'No account';
+		return accounts.find((a) => a.id === accountId)?.name ?? 'No account';
 	}
 </script>
 
@@ -70,6 +78,14 @@
 							</option>
 						{/each}
 					</select>
+					<select name="accountId" aria-label="Account" class="rounded border px-2 py-1">
+						<option value="">No account</option>
+						{#each accounts as account (account.id)}
+							<option value={account.id} selected={account.id === holding.accountId}>
+								{account.name}
+							</option>
+						{/each}
+					</select>
 					<button type="submit">Save</button>
 					<button type="button" onclick={() => (editingId = null)}>Cancel</button>
 				</form>
@@ -77,6 +93,7 @@
 				<a class="w-20 text-blue-700 underline" href={`/holdings/${holding.id}`}>{holding.symbol}</a>
 				<span class="flex-1">{holding.name}</span>
 				<span class="w-32">{categoryName(holding.categoryId)}</span>
+				<span class="w-28">{accountName(holding.accountId)}</span>
 				<span class="w-24">{sharesFmt.format(holding.shares)} sh</span>
 				<span class="w-24">{formatUsd(holding.currentValue)}</span>
 				<button type="button" onclick={() => (editingId = holding.id)}>Edit</button>
@@ -112,6 +129,15 @@
 			<option value="">Uncategorized</option>
 			{#each categories as category (category.id)}
 				<option value={category.id}>{category.name}</option>
+			{/each}
+		</select>
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="holding-account">Account</label>
+		<select id="holding-account" name="accountId" class="rounded border px-2 py-1">
+			<option value="">No account</option>
+			{#each accounts as account (account.id)}
+				<option value={account.id}>{account.name}</option>
 			{/each}
 		</select>
 	</div>
