@@ -3,7 +3,7 @@ import { accountSchema, holdingSchema, lotSchema, netWorthItemSchema } from './s
 
 describe('schema cent-flooring', () => {
   it('floors holding currentValue down to the cent', () => {
-    const h = holdingSchema.parse({ symbol: 'X', name: 'X', categoryId: null, accountId: null, currentValue: '10.999' });
+    const h = holdingSchema.parse({ symbol: 'X', name: 'X', categoryId: null, currentValue: '10.999' });
     expect(h.currentValue).toBe(10.99);
   });
   it('floors lot fee but leaves pricePerShare at full precision', () => {
@@ -44,6 +44,11 @@ describe('holdingSchema accountId', () => {
   const base = { symbol: 'X', name: 'X', categoryId: null };
   it('parses a valid accountId', () => {
     expect(holdingSchema.parse({ ...base, accountId: '3' }).accountId).toBe(3);
+  });
+  it('parses with no accountId field', () => {
+    const r = holdingSchema.safeParse(base);
+    expect(r.success).toBe(true);
+    expect(r.success && r.data.accountId).toBeUndefined();
   });
   it('accepts null accountId', () => {
     expect(holdingSchema.parse({ ...base, accountId: null }).accountId).toBeNull();

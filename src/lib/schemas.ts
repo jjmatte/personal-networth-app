@@ -20,7 +20,7 @@ export const holdingSchema = z.object({
   name: z.string().min(1),
   kind: z.enum(['equity', 'crypto']).default('equity'),
   categoryId: z.coerce.number().int().nullable(),
-  accountId: z.coerce.number().int().nullable(),
+  accountId: z.coerce.number().int().nullable().optional(),
   currentValue: dollars.default(0)
 });
 export const lotSchema = z.object({
