@@ -101,4 +101,18 @@ describe('networth repository', () => {
     expect(pre.rows.find((r) => r.category === 'Investments')!.amount).toBe(500);
     expect(pre.rows.find((r) => r.category === 'Cash')!.amount).toBe(8400);
   });
+  it('buildPrefill(fromId) copies the specified snapshot, not the latest', async () => {
+    const older = await createSnapshot({
+      takenAt: new Date('2026-01-01'),
+      items: [row({ category: 'Cash', label: 'Older checking', amount: 1111 })]
+    });
+    await createSnapshot({
+      takenAt: new Date('2026-06-01'),
+      items: [row({ category: 'Cash', label: 'Newer checking', amount: 2222 })]
+    });
+    const pre = await buildPrefill(older.id);
+    expect(pre.rows.find((r) => r.category === 'Cash')!.label).toBe('Older checking');
+    expect(pre.rows.find((r) => r.category === 'Cash')!.amount).toBe(1111);
+    expect(pre.rows.some((r) => r.label === 'Newer checking')).toBe(false);
+  });
 });

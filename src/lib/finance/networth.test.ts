@@ -46,4 +46,16 @@ describe('reconcileInvestmentLine', () => {
     expect(out.find((r) => r.category === 'Cash')!.amount).toBe(8400);
     expect(out).toHaveLength(2);
   });
+  it('requires both category AND label to match — decoys do not count as the Investments line', () => {
+    const rows = [
+      row({ category: 'Investments', label: 'Crypto fund', amount: 500 }), // category match, label miss
+      row({ category: 'Brokerage', label: 'Investment portfolio', amount: 700 }) // label match, category miss
+    ];
+    const out = reconcileInvestmentLine(rows, 1960);
+    // Neither decoy matched, so a fresh Investments line is prepended and both decoys stay intact.
+    expect(out).toHaveLength(3);
+    expect(out[0]).toMatchObject({ ...INVESTMENTS_LINE, side: 'asset', amount: 1960 });
+    expect(out.find((r) => r.label === 'Crypto fund')!.amount).toBe(500);
+    expect(out.find((r) => r.category === 'Brokerage')!.amount).toBe(700);
+  });
 });
