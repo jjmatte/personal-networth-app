@@ -18,3 +18,16 @@ export function bestQuarterGain(snapshots: SnapshotPoint[]): number | null {
   }
   return best;
 }
+
+export type NetWorthSeriesPoint = { t: Date; value: number };
+
+// Chart-ready points for net worth over time, ascending by date. Accepts Date,
+// epoch-ms, or ISO-string takenAt so it tolerates values serialized across the
+// SvelteKit load boundary.
+export function buildNetWorthSeries(
+  snapshots: { takenAt: Date | number | string; total: number }[]
+): NetWorthSeriesPoint[] {
+  return [...snapshots]
+    .map((s) => ({ t: new Date(s.takenAt), value: s.total }))
+    .sort((a, b) => a.t.getTime() - b.t.getTime());
+}

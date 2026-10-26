@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { gainVsPrevious, runningTotalGain, bestQuarterGain } from './snapshot-stats';
+import { gainVsPrevious, runningTotalGain, bestQuarterGain, buildNetWorthSeries } from './snapshot-stats';
 
 const series = [
   { id: 1, takenAt: new Date('2025-01-01'), total: 1000 },
@@ -28,5 +28,35 @@ describe('snapshot-stats', () => {
     expect(bestQuarterGain(single)).toBeNull();
     expect(bestQuarterGain([])).toBeNull();
     expect(bestQuarterGain([series[0], { id: 2, takenAt: new Date('2025-04-01'), total: 900 }])).toBe(-100);
+  });
+
+  describe('buildNetWorthSeries', () => {
+    it('orders points ascending by takenAt regardless of input order', () => {
+      const unordered = [series[2], series[0], series[1]]; // Jul, Jan, Apr
+      const points = buildNetWorthSeries(unordered);
+      expect(points.map((p) => p.value)).toEqual([1000, 1500, 1400]);
+      expect(points.map((p) => p.t.getTime())).toEqual([
+        new Date('2025-01-01').getTime(),
+        new Date('2025-04-01').getTime(),
+        new Date('2025-07-01').getTime()
+      ]);
+    });
+
+    it('normalizes takenAt to a Date (tolerates serialized epoch/string input)', () => {
+      const points = buildNetWorthSeries([
+        { takenAt: new Date('2025-04-01').getTime(), total: 1500 },
+        { takenAt: '2025-01-01', total: 1000 }
+      ]);
+      expect(points.map((p) => p.value)).toEqual([1000, 1500]);
+      expect(points.every((p) => p.t instanceof Date)).toBe(true);
+    });
+
+    it('returns an empty array for no snapshots', () => {
+      expect(buildNetWorthSeries([])).toEqual([]);
+    });
+
+    it('returns a single point for one snapshot', () => {
+      expect(buildNetWorthSeries([series[0]])).toEqual([{ t: series[0].takenAt, value: 1000 }]);
+    });
   });
 });
