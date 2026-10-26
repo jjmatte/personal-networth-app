@@ -9,6 +9,18 @@ async function addMilestone(page: Page, label: string, kind: 'fixed' | 'percent'
 	await expect(page.getByTestId('rung').filter({ hasText: label })).toBeVisible();
 }
 
+// The milestone editor lives in the "Manage milestones" modal; the spend form
+// and the ladder stay on the page. A native modal makes the page inert, so we
+// open the modal for milestone edits and close it before touching spend.
+async function openMilestones(page: Page) {
+	await page.getByRole('button', { name: 'Manage milestones' }).click();
+	await expect(page.getByTestId('add-milestone')).toBeVisible();
+}
+async function closeModal(page: Page) {
+	await page.keyboard.press('Escape');
+	await expect(page.locator('dialog[open]')).toHaveCount(0);
+}
+
 test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 0 is pending', async ({ page }) => {
 	test.setTimeout(60_000);
 	await page.goto('/fire');
@@ -33,6 +45,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 
 		await page.goto('/fire');
 		await expect(page.getByRole('link', { name: 'FIRE' })).toBeVisible();
+		await openMilestones(page);
 		await addMilestone(page, 'E2E Low', 'fixed', '1000');
 		await addMilestone(page, 'E2E High', 'fixed', '100000');
 		await addMilestone(page, 'E2E Half', 'percent', '50');
@@ -48,6 +61,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 		await expect(page.getByText('Invalid milestone')).toBeVisible();
 		await expect(page.getByTestId('rung').filter({ hasText: 'E2E BadPct' })).toHaveCount(0);
 
+		await closeModal(page);
 		await page.getByLabel('Monthly spend').fill('4000');
 		await page.getByRole('button', { name: 'Save spend' }).click();
 		await expect(page.getByTestId('fire-number')).toContainText('$1,200,000.00');
@@ -67,6 +81,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 		await expect(rung('E2E Low')).toContainText('Complete');
 
 		// Edit then delete a milestone.
+		await openMilestones(page);
 		const edit = page.locator('[data-testid="milestone-row"][data-label="E2E Low"]');
 		await edit.getByLabel('Value').fill('2000');
 		await edit.getByRole('button', { name: 'Save' }).click();
@@ -74,6 +89,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 	} finally {
 		try {
 			await page.goto('/fire');
+			await openMilestones(page);
 			for (const label of ['E2E Low', 'E2E High', 'E2E Half', 'E2E Negative']) {
 				const r = page.locator(`[data-testid="milestone-row"][data-label="${label}"]`);
 				if ((await r.count()) > 0) {
@@ -81,6 +97,7 @@ test('fire ladder: spend drives percent rungs, net worth completes rungs, spend 
 					await expect(r).toHaveCount(0);
 				}
 			}
+			await closeModal(page);
 			await page.getByLabel('Monthly spend').fill(originalSpend);
 			await page.getByRole('button', { name: 'Save spend' }).click();
 			await expect(page.getByTestId('fire-number')).toBeVisible();

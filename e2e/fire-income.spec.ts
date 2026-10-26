@@ -1,4 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openIncome(page: Page) {
+	await page.getByRole('button', { name: 'Manage income' }).click();
+	await expect(page.getByTestId('add-income-year')).toBeVisible();
+}
+async function closeModal(page: Page) {
+	await page.keyboard.press('Escape');
+	await expect(page.locator('dialog[open]')).toHaveCount(0);
+}
 
 test('add an income year and person lines, see actual vs estimated, and clean up', async ({ page }) => {
 	// Far-past year stays clear of other data in the shared e2e DB.
@@ -9,6 +18,7 @@ test('add an income year and person lines, see actual vs estimated, and clean up
 
 	try {
 		await page.goto('/fire');
+		await openIncome(page);
 		const addYear = page.getByTestId('add-income-year');
 		await addYear.getByLabel('Year').fill(year);
 		await addYear.getByLabel('Estimated income').fill('100000');
@@ -29,11 +39,13 @@ test('add an income year and person lines, see actual vs estimated, and clean up
 			await add.getByRole('button', { name: 'Add person income' }).click();
 			await expect(personRows).toHaveCount(i + 1);
 		}
+		await closeModal(page);
 
 		await expect(incomeRow.getByTestId('income-actual')).toContainText('$75,000.00');
 		await expect(incomeRow.getByTestId('income-estimated')).toContainText('$100,000.00');
 	} finally {
 		await page.goto('/fire');
+		await openIncome(page);
 		while ((await personRows.count()) > 0) {
 			const before = await personRows.count();
 			await personRows.first().getByRole('button', { name: 'Delete' }).click();

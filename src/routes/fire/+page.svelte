@@ -1,8 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { formatUsd } from '$lib/money';
+	import MilestonesManager from '$lib/components/MilestonesManager.svelte';
+	import YearlyManager from '$lib/components/YearlyManager.svelte';
+	import IncomeManager from '$lib/components/IncomeManager.svelte';
 
 	let { data, form } = $props();
+
+	let milestonesDialog: HTMLDialogElement;
+	let yearlyDialog: HTMLDialogElement;
+	let incomeDialog: HTMLDialogElement;
 
 	const progress = $derived(
 		data.fireNumber > 0 ? Math.max(0, Math.min(100, (data.netWorth / data.fireNumber) * 100)) : null
@@ -49,7 +55,10 @@
 	</section>
 
 	<section class="mb-6">
-		<h2 class="mb-2 font-medium">Milestone ladder</h2>
+		<div class="mb-2 flex items-center justify-between">
+			<h2 class="font-medium">Milestone ladder</h2>
+			<button type="button" onclick={() => milestonesDialog.showModal()} class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Manage milestones</button>
+		</div>
 		<ul class="divide-y rounded border">
 			{#each data.rungs as rung, i (i)}
 				<li class="flex items-center gap-4 p-2" data-testid="rung">
@@ -70,7 +79,10 @@
 	</section>
 
 	<section class="mb-6">
-		<h2 class="mb-2 font-medium">Yearly review</h2>
+		<div class="mb-2 flex items-center justify-between">
+			<h2 class="font-medium">Yearly review</h2>
+			<button type="button" onclick={() => yearlyDialog.showModal()} class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Manage years</button>
+		</div>
 		<table class="w-full rounded border text-left">
 			<thead>
 				<tr class="border-b">
@@ -106,29 +118,13 @@
 				{/each}
 			</tbody>
 		</table>
-
-		<h3 class="mt-4 mb-2 font-medium">Edit manual years</h3>
-		{#if form?.yearError}<p class="mb-2 text-red-700">{form.yearError}</p>{/if}
-		<div class="divide-y rounded border">
-			{#each data.manualYears as m (m.id)}
-				<form method="POST" use:enhance class="flex items-center gap-2 p-2" data-testid="manual-year-row" data-year={m.year}>
-					<input type="hidden" name="id" value={m.id} />
-					<input type="number" name="year" aria-label="Year" step="1" value={m.year} readonly tabindex="-1" required class="w-24 rounded border bg-gray-100 px-2 py-1 text-gray-500" />
-					<input type="number" name="netWorth" aria-label="Net worth" min="0" step="0.01" value={m.netWorth} required class="w-40 rounded border px-2 py-1" />
-					<button formaction="?/upsertYear" class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Save</button>
-					<button formaction="?/deleteYear" formnovalidate class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Delete</button>
-				</form>
-			{/each}
-		</div>
-		<form method="POST" action="?/upsertYear" use:enhance class="mt-4 flex items-center gap-2" data-testid="add-year">
-			<input type="number" name="year" aria-label="Year" placeholder="Year" step="1" required class="w-24 rounded border px-2 py-1" />
-			<input type="number" name="netWorth" aria-label="Net worth" placeholder="Net worth" min="0" step="0.01" required class="w-40 rounded border px-2 py-1" />
-			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Add year</button>
-		</form>
 	</section>
 
 	<section class="mb-6">
-		<h2 class="mb-2 font-medium">Income</h2>
+		<div class="mb-2 flex items-center justify-between">
+			<h2 class="font-medium">Income</h2>
+			<button type="button" onclick={() => incomeDialog.showModal()} class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Manage income</button>
+		</div>
 		<table class="w-full rounded border text-left">
 			<thead>
 				<tr class="border-b">
@@ -166,109 +162,35 @@
 				{/each}
 			</tbody>
 		</table>
-
-		{#if form?.incomeError}<p class="mt-2 text-red-700">{form.incomeError}</p>{/if}
-
-		<h3 class="mt-4 mb-2 font-medium">Edit income years</h3>
-		<div class="divide-y rounded border">
-			{#each data.incomeYears as m (m.id)}
-				<form method="POST" use:enhance class="flex items-center gap-2 p-2" data-testid="income-year-row" data-year={m.year}>
-					<input type="hidden" name="id" value={m.id} />
-					<input type="number" name="year" aria-label="Year" step="1" value={m.year} readonly tabindex="-1" required class="w-24 rounded border bg-gray-100 px-2 py-1 text-gray-500" />
-					<input type="number" name="estimatedIncome" aria-label="Estimated income" min="0" step="0.01" value={m.estimatedIncome} required class="w-32 rounded border px-2 py-1" />
-					<input type="number" name="investmentIncome" aria-label="Investment income" min="0" step="0.01" value={m.investmentIncome} required class="w-32 rounded border px-2 py-1" />
-					<input type="number" name="netMonthlyMargin" aria-label="Net monthly margin" min="0" step="0.01" value={m.netMonthlyMargin} required class="w-32 rounded border px-2 py-1" />
-					<button formaction="?/upsertIncomeYear" class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Save</button>
-					<button formaction="?/deleteIncomeYear" formnovalidate class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Delete</button>
-				</form>
-			{/each}
-		</div>
-		<form method="POST" action="?/upsertIncomeYear" use:enhance class="mt-4 flex items-center gap-2" data-testid="add-income-year">
-			<input type="number" name="year" aria-label="Year" placeholder="Year" step="1" required class="w-24 rounded border px-2 py-1" />
-			<input type="number" name="estimatedIncome" aria-label="Estimated income" placeholder="Estimated" min="0" step="0.01" required class="w-32 rounded border px-2 py-1" />
-			<input type="number" name="investmentIncome" aria-label="Investment income" placeholder="Investment" min="0" step="0.01" required class="w-32 rounded border px-2 py-1" />
-			<input type="number" name="netMonthlyMargin" aria-label="Net monthly margin" placeholder="Net margin/mo" min="0" step="0.01" required class="w-32 rounded border px-2 py-1" />
-			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Add income year</button>
-		</form>
-
-		<h3 class="mt-4 mb-2 font-medium">Edit person income</h3>
-		<div class="divide-y rounded border">
-			{#each data.personIncomes as m (m.id)}
-				<form method="POST" use:enhance class="flex items-center gap-2 p-2" data-testid="person-income-row" data-year={m.year}>
-					<input type="hidden" name="id" value={m.id} />
-					<input type="number" name="year" aria-label="Year" step="1" value={m.year} required class="w-24 rounded border px-2 py-1" />
-					<input name="name" aria-label="Name" value={m.name} required class="flex-1 rounded border px-2 py-1" />
-					<input type="number" name="amount" aria-label="Amount" min="0" step="0.01" value={m.amount} required class="w-32 rounded border px-2 py-1" />
-					<button formaction="?/upsertPersonIncome" class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Save</button>
-					<button formaction="?/deletePersonIncome" formnovalidate class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Delete</button>
-				</form>
-			{/each}
-		</div>
-		<form method="POST" action="?/upsertPersonIncome" use:enhance class="mt-4 flex items-center gap-2" data-testid="add-person-income">
-			<input type="number" name="year" aria-label="Year" placeholder="Year" step="1" required class="w-24 rounded border px-2 py-1" />
-			<input name="name" aria-label="Name" placeholder="Name" required class="flex-1 rounded border px-2 py-1" />
-			<input type="number" name="amount" aria-label="Amount" placeholder="Amount" min="0" step="0.01" required class="w-32 rounded border px-2 py-1" />
-			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Add person income</button>
-		</form>
-	</section>
-
-	<section>
-		<h2 class="mb-2 font-medium">Edit milestones</h2>
-		{#if form?.milestoneError}<p class="mb-2 text-red-700">{form.milestoneError}</p>{/if}
-		<div class="divide-y rounded border">
-			{#each data.milestones as m (m.id)}
-				<form method="POST" class="flex items-center gap-2 p-2" data-testid="milestone-row" data-label={m.label}>
-					<input type="hidden" name="id" value={m.id} />
-					<input name="label" aria-label="Label" value={m.label} required class="flex-1 rounded border px-2 py-1" />
-					<select name="kind" aria-label="Kind" class="rounded border px-2 py-1">
-						<option value="fixed" selected={m.kind === 'fixed'}>Fixed $</option>
-						<option value="percent" selected={m.kind === 'percent'}>% of FIRE</option>
-					</select>
-					<input
-						type="number"
-						name="value"
-						aria-label="Value"
-						step="any"
-						value={m.value}
-						required
-						class="w-28 rounded border px-2 py-1"
-					/>
-					<input
-						type="number"
-						name="sortOrder"
-						aria-label="Order"
-						min="0"
-						step="1"
-						value={m.sortOrder}
-						class="w-16 rounded border px-2 py-1"
-					/>
-					<button formaction="?/updateMilestone" class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Save</button>
-					<button formaction="?/deleteMilestone" formnovalidate class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Delete</button>
-				</form>
-			{/each}
-		</div>
-
-		<form
-			method="POST"
-			action="?/createMilestone"
-			class="mt-4 flex items-center gap-2"
-			data-testid="add-milestone"
-		>
-			<input name="label" aria-label="Label" placeholder="Label" required class="flex-1 rounded border px-2 py-1" />
-			<select name="kind" aria-label="Kind" class="rounded border px-2 py-1">
-				<option value="fixed">Fixed $</option>
-				<option value="percent">% of FIRE</option>
-			</select>
-			<input
-				type="number"
-				name="value"
-				aria-label="Value"
-				placeholder="Value"
-				step="any"
-				required
-				class="w-28 rounded border px-2 py-1"
-			/>
-			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Add milestone</button>
-		</form>
 	</section>
 </main>
+
+<dialog bind:this={milestonesDialog} class="w-full max-w-2xl rounded-lg p-0 backdrop:bg-black/40">
+	<div class="p-4">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-xl font-semibold">Manage milestones</h2>
+			<button type="button" onclick={() => milestonesDialog.close()} class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Close</button>
+		</div>
+		<MilestonesManager milestones={data.milestones} {form} />
+	</div>
+</dialog>
+
+<dialog bind:this={yearlyDialog} class="w-full max-w-2xl rounded-lg p-0 backdrop:bg-black/40">
+	<div class="p-4">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-xl font-semibold">Manage yearly net worth</h2>
+			<button type="button" onclick={() => yearlyDialog.close()} class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Close</button>
+		</div>
+		<YearlyManager manualYears={data.manualYears} {form} />
+	</div>
+</dialog>
+
+<dialog bind:this={incomeDialog} class="w-full max-w-4xl rounded-lg p-0 backdrop:bg-black/40">
+	<div class="p-4">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-xl font-semibold">Manage income</h2>
+			<button type="button" onclick={() => incomeDialog.close()} class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Close</button>
+		</div>
+		<IncomeManager incomeYears={data.incomeYears} personIncomes={data.personIncomes} {form} />
+	</div>
+</dialog>
