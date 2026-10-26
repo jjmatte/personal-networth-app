@@ -89,7 +89,7 @@ export const incomePersonYear = sqliteTable('income_person_year', {
   amount: real('amount').notNull().default(0)
 });
 
-export const fireMilestone =sqliteTable('fire_milestone', {
+export const fireMilestone = sqliteTable('fire_milestone', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   label: text('label').notNull(),
   kind: text('kind').notNull(),

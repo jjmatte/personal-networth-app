@@ -33,11 +33,11 @@ const nonEmptyFinite = z.string().trim().min(1).pipe(z.coerce.number().finite())
 const nonEmptyNumber = z.string().trim().min(1).pipe(z.coerce.number().finite().nonnegative());
 const idSchema = z.coerce.number().int().positive();
 const yearSchema = z.object({
-	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
+	year: z.string().trim().min(1).pipe(z.coerce.number().int().min(1900).max(2200)),
 	netWorth: nonEmptyNumber
 });
 const incomeYearSchema = z.object({
-	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
+	year: z.string().trim().min(1).pipe(z.coerce.number().int().min(1900).max(2200)),
 	estimatedIncome: nonEmptyNumber,
 	investmentIncome: nonEmptyNumber,
 	netMonthlyMargin: nonEmptyNumber
