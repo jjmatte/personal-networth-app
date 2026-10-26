@@ -18,6 +18,15 @@ import {
 	deleteYearlyNetWorth
 } from '$lib/server/repositories/yearly';
 import { buildYearlyReview } from '$lib/finance/yearly';
+import {
+	listIncomeYears,
+	upsertIncomeYear,
+	deleteIncomeYear,
+	listPersonIncomes,
+	upsertPersonIncome,
+	deletePersonIncome
+} from '$lib/server/repositories/income';
+import { buildIncomeReview } from '$lib/finance/income';
 import { fireNumber, ladderStatus, accessibilitySplit } from '$lib/finance/fire';
 
 const nonEmptyFinite = z.string().trim().min(1).pipe(z.coerce.number().finite());
@@ -26,6 +35,18 @@ const idSchema = z.coerce.number().int().positive();
 const yearSchema = z.object({
 	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
 	netWorth: nonEmptyNumber
+});
+const incomeYearSchema = z.object({
+	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
+	estimatedIncome: nonEmptyNumber,
+	investmentIncome: nonEmptyNumber,
+	netMonthlyMargin: nonEmptyNumber
+});
+const personIncomeSchema = z.object({
+	id: z.preprocess((v) => (v === '' ? undefined : v), idSchema.optional()),
+	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
+	name: z.string().trim().min(1),
+	amount: nonEmptyNumber
 });
 const spendSchema = z.object({ monthlySpend: nonEmptyNumber });
 const milestoneSchema = z
@@ -48,6 +69,7 @@ export const load: PageServerLoad = async () => {
 		listYearlyNetWorth(),
 		listSnapshots()
 	]);
+	const [incomeYears, personIncomes] = await Promise.all([listIncomeYears(), listPersonIncomes()]);
 	const fire = fireNumber(monthlySpend);
 	const netWorth = snapshot?.total ?? 0;
 
@@ -75,6 +97,9 @@ export const load: PageServerLoad = async () => {
 		})),
 		yearly: buildYearlyReview(manualYears, snapshots),
 		manualYears,
+		income: buildIncomeReview(incomeYears, personIncomes),
+		incomeYears,
+		personIncomes,
 		split: accessibilitySplit(accounts, holdings)
 	};
 };
@@ -127,6 +152,30 @@ export const actions: Actions = {
 		const id = idSchema.safeParse(form.id);
 		if (!id.success) return fail(400, { yearError: 'Invalid year' });
 		await deleteYearlyNetWorth(id.data);
+		return { success: true };
+	},
+	upsertIncomeYear: async ({ request }) => {
+		const parsed = incomeYearSchema.safeParse(Object.fromEntries(await request.formData()));
+		if (!parsed.success) return fail(400, { incomeError: 'Enter a year and amounts of 0 or more' });
+		await upsertIncomeYear(parsed.data);
+		return { success: true };
+	},
+	deleteIncomeYear: async ({ request }) => {
+		const id = idSchema.safeParse(Object.fromEntries(await request.formData()).id);
+		if (!id.success) return fail(400, { incomeError: 'Invalid income year' });
+		await deleteIncomeYear(id.data);
+		return { success: true };
+	},
+	upsertPersonIncome: async ({ request }) => {
+		const parsed = personIncomeSchema.safeParse(Object.fromEntries(await request.formData()));
+		if (!parsed.success) return fail(400, { incomeError: 'Enter a year, a name, and an amount of 0 or more' });
+		await upsertPersonIncome(parsed.data);
+		return { success: true };
+	},
+	deletePersonIncome: async ({ request }) => {
+		const id = idSchema.safeParse(Object.fromEntries(await request.formData()).id);
+		if (!id.success) return fail(400, { incomeError: 'Invalid income line' });
+		await deletePersonIncome(id.data);
 		return { success: true };
 	}
 };
