@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatUsd } from '$lib/money';
+	import NetWorthChart from '$lib/components/NetWorthChart.svelte';
 	let { data } = $props();
 	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 </script>
@@ -12,6 +13,11 @@
 	{#if data.snapshots.length === 0}
 		<p class="text-gray-600">No snapshots yet. <a class="text-blue-700 underline" href="/net-worth/new">Create your first.</a></p>
 	{:else}
+		{#if data.series.length >= 2}
+			<div data-testid="net-worth-chart" class="mb-4 h-64 rounded border p-3">
+				<NetWorthChart points={data.series} />
+			</div>
+		{/if}
 		{#if data.bestPeriodGain !== null}
 			<p data-testid="best-period" class="mb-2 text-sm text-gray-600">
 				Best period gain: <span class="font-medium">{data.bestPeriodGain >= 0 ? '+' : ''}{formatUsd(data.bestPeriodGain)}</span>

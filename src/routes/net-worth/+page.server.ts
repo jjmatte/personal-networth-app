@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { listSnapshots } from '$lib/server/repositories/networth';
-import { gainVsPrevious, runningTotalGain, bestQuarterGain } from '$lib/finance/snapshot-stats';
+import { gainVsPrevious, runningTotalGain, bestQuarterGain, buildNetWorthSeries } from '$lib/finance/snapshot-stats';
 
 export const load: PageServerLoad = async () => {
   const newestFirst = await listSnapshots();
@@ -11,6 +11,7 @@ export const load: PageServerLoad = async () => {
       delta: gainVsPrevious(ascending, s.id),
       runningGain: runningTotalGain(ascending, s.id)
     })),
-    bestPeriodGain: bestQuarterGain(ascending)
+    bestPeriodGain: bestQuarterGain(ascending),
+    series: buildNetWorthSeries(newestFirst)
   };
 };

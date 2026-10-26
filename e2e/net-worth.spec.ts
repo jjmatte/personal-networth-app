@@ -58,6 +58,46 @@ test('history lists snapshots, edit updates the total, home shows latest', async
 	await expect(page.locator('main').getByRole('link', { name: /Net Worth/ })).toContainText('$1,500');
 });
 
+test('net-worth-over-time chart renders once there are at least two snapshots', async ({ page }) => {
+	// 1980 dates keep these unique and earliest in the shared e2e DB.
+	const series = [
+		{ date: '1980-01-01', amount: '2000' },
+		{ date: '1980-04-01', amount: '2600' }
+	];
+	const rowFor = (label: string) => page.getByRole('link', { name: new RegExp(label) });
+
+	try {
+		for (const s of series) {
+			await page.goto('/net-worth/new');
+			for (const btn = page.getByRole('button', { name: 'Remove row' }); (await btn.count()) > 0; ) {
+				await btn.first().click();
+			}
+			await page.getByRole('button', { name: 'Add asset' }).click();
+			const row = page.locator('section', { hasText: 'Assets' }).locator('div.flex.items-center').last();
+			await row.getByPlaceholder('Category').fill('Cash');
+			await row.getByPlaceholder('Label').fill('Checking');
+			await row.getByPlaceholder('Amount').fill(s.amount);
+			await page.locator('#nw-date').fill(s.date);
+			await page.getByRole('button', { name: 'Save snapshot' }).click();
+			await expect(page).toHaveURL(/\/net-worth\/\d+$/);
+		}
+
+		await page.goto('/net-worth');
+		const chart = page.getByTestId('net-worth-chart');
+		await expect(chart).toBeVisible();
+		await expect(chart.locator('canvas')).toBeVisible();
+	} finally {
+		page.on('dialog', (d) => d.accept());
+		await page.goto('/net-worth');
+		for (const label of ['Apr 1, 1980', 'Jan 1, 1980']) {
+			if ((await rowFor(label).count()) === 0) continue;
+			await rowFor(label).click();
+			await page.getByRole('button', { name: 'Delete' }).click();
+			await expect(page).toHaveURL(/\/net-worth$/);
+		}
+	}
+});
+
 test('history shows per-snapshot gain, running total, and first-snapshot marker', async ({ page }) => {
 	// 1990 dates guarantee these are the earliest snapshots in the shared e2e DB.
 	const series = [
