@@ -9,14 +9,24 @@ import {
 	updateMilestone,
 	deleteMilestone
 } from '$lib/server/repositories/fire';
-import { latestSnapshot } from '$lib/server/repositories/networth';
+import { latestSnapshot, listSnapshots } from '$lib/server/repositories/networth';
 import { listHoldings } from '$lib/server/repositories/holdings';
 import { listAccounts } from '$lib/server/repositories/accounts';
+import {
+	listYearlyNetWorth,
+	upsertYearlyNetWorth,
+	deleteYearlyNetWorth
+} from '$lib/server/repositories/yearly';
+import { buildYearlyReview } from '$lib/finance/yearly';
 import { fireNumber, ladderStatus, accessibilitySplit } from '$lib/finance/fire';
 
 const nonEmptyFinite = z.string().trim().min(1).pipe(z.coerce.number().finite());
 const nonEmptyNumber = z.string().trim().min(1).pipe(z.coerce.number().finite().nonnegative());
 const idSchema = z.coerce.number().int().positive();
+const yearSchema = z.object({
+	year: z.string().trim().min(1).pipe(z.coerce.number().int()),
+	netWorth: nonEmptyNumber
+});
 const spendSchema = z.object({ monthlySpend: nonEmptyNumber });
 const milestoneSchema = z
 	.object({
@@ -28,12 +38,15 @@ const milestoneSchema = z
 	.refine((m) => m.kind === 'fixed' || m.value >= 0, { path: ['value'] });
 
 export const load: PageServerLoad = async () => {
-	const [{ monthlySpend }, milestones, snapshot, holdings, accounts] = await Promise.all([
+	const [{ monthlySpend }, milestones, snapshot, holdings, accounts, manualYears, snapshots] =
+		await Promise.all([
 		getSettings(),
 		listMilestones(),
 		latestSnapshot(),
 		listHoldings(),
-		listAccounts()
+		listAccounts(),
+		listYearlyNetWorth(),
+		listSnapshots()
 	]);
 	const fire = fireNumber(monthlySpend);
 	const netWorth = snapshot?.total ?? 0;
@@ -60,6 +73,8 @@ export const load: PageServerLoad = async () => {
 			value: m.value,
 			sortOrder: m.sortOrder
 		})),
+		yearly: buildYearlyReview(manualYears, snapshots),
+		manualYears,
 		split: accessibilitySplit(accounts, holdings)
 	};
 };
@@ -99,6 +114,19 @@ export const actions: Actions = {
 		const id = idSchema.safeParse(form.id);
 		if (!id.success) return fail(400, { milestoneError: 'Invalid milestone' });
 		await deleteMilestone(id.data);
+		return { success: true };
+	},
+	upsertYear: async ({ request }) => {
+		const parsed = yearSchema.safeParse(Object.fromEntries(await request.formData()));
+		if (!parsed.success) return fail(400, { yearError: 'Enter a year and a net worth of 0 or more' });
+		await upsertYearlyNetWorth(parsed.data.year, parsed.data.netWorth);
+		return { success: true };
+	},
+	deleteYear: async ({ request }) => {
+		const form = Object.fromEntries(await request.formData());
+		const id = idSchema.safeParse(form.id);
+		if (!id.success) return fail(400, { yearError: 'Invalid year' });
+		await deleteYearlyNetWorth(id.data);
 		return { success: true };
 	}
 };

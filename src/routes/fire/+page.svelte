@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { formatUsd } from '$lib/money';
 
 	let { data, form } = $props();
@@ -66,6 +67,64 @@
 				</li>
 			{/each}
 		</ul>
+	</section>
+
+	<section class="mb-6">
+		<h2 class="mb-2 font-medium">Yearly review</h2>
+		<table class="w-full rounded border text-left">
+			<thead>
+				<tr class="border-b">
+					<th class="p-2">Year</th>
+					<th class="p-2">Net Worth</th>
+					<th class="p-2">Gain</th>
+					<th class="p-2">Monthly</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each data.yearly as r (r.year)}
+					<tr class="border-b" data-testid="yearly-row" data-year={r.year}>
+						<td class="p-2">
+							{r.year}
+							{#if r.source === 'snapshot'}<span class="text-xs text-gray-500">from snapshots</span>{/if}
+						</td>
+						<td class="p-2">{formatUsd(r.netWorth)}</td>
+						<td class="p-2">
+							{#if r.gain === null}
+								<span class="text-gray-500">-</span>
+							{:else}
+								<span data-testid="yearly-gain" class={r.gain >= 0 ? 'text-green-700' : 'text-red-700'}>{r.gain >= 0 ? '+' : ''}{formatUsd(r.gain)}</span>
+							{/if}
+						</td>
+						<td class="p-2">
+							{#if r.monthly === null}
+								<span class="text-gray-500">-</span>
+							{:else}
+								<span data-testid="yearly-monthly" class={r.monthly >= 0 ? 'text-green-700' : 'text-red-700'}>{r.monthly >= 0 ? '+' : ''}{formatUsd(r.monthly)}</span>
+							{/if}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+
+		<h3 class="mt-4 mb-2 font-medium">Edit manual years</h3>
+		{#if form?.yearError}<p class="mb-2 text-red-700">{form.yearError}</p>{/if}
+		<div class="divide-y rounded border">
+			{#each data.manualYears as m (m.id)}
+				<form method="POST" use:enhance class="flex items-center gap-2 p-2" data-testid="manual-year-row" data-year={m.year}>
+					<input type="hidden" name="id" value={m.id} />
+					<input type="number" name="year" aria-label="Year" step="1" value={m.year} required class="w-24 rounded border px-2 py-1" />
+					<input type="number" name="netWorth" aria-label="Net worth" min="0" step="0.01" value={m.netWorth} required class="w-40 rounded border px-2 py-1" />
+					<button formaction="?/upsertYear" class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Save</button>
+					<button formaction="?/deleteYear" formnovalidate class="rounded border px-2 py-1 text-sm hover:bg-gray-50">Delete</button>
+				</form>
+			{/each}
+		</div>
+		<form method="POST" action="?/upsertYear" use:enhance class="mt-4 flex items-center gap-2" data-testid="add-year">
+			<input type="number" name="year" aria-label="Year" placeholder="Year" step="1" required class="w-24 rounded border px-2 py-1" />
+			<input type="number" name="netWorth" aria-label="Net worth" placeholder="Net worth" min="0" step="0.01" required class="w-40 rounded border px-2 py-1" />
+			<button type="submit" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Add year</button>
+		</form>
 	</section>
 
 	<section>
