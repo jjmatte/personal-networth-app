@@ -43,6 +43,13 @@
       "when": 1792523427644,
       "tag": "0005_amazing_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793042891962,
+      "tag": "0006_illegal_butterfly",
+      "breakpoints": true
     }
   ]
 }

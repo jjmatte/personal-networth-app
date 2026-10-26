@@ -68,7 +68,28 @@ export const settings = sqliteTable('settings', {
   monthlySpend: real('monthly_spend').notNull().default(0)
 });
 
-export const fireMilestone = sqliteTable('fire_milestone', {
+export const yearlyNetWorth = sqliteTable('yearly_net_worth', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  year: integer('year').notNull().unique(),
+  netWorth: real('net_worth').notNull().default(0)
+});
+
+export const incomeYear = sqliteTable('income_year', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  year: integer('year').notNull().unique(),
+  estimatedIncome: real('estimated_income').notNull().default(0),
+  investmentIncome: real('investment_income').notNull().default(0),
+  netMonthlyMargin: real('net_monthly_margin').notNull().default(0)
+});
+
+export const incomePersonYear = sqliteTable('income_person_year', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  year: integer('year').notNull(),
+  name: text('name').notNull(),
+  amount: real('amount').notNull().default(0)
+});
+
+export const fireMilestone =sqliteTable('fire_milestone', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   label: text('label').notNull(),
   kind: text('kind').notNull(),
