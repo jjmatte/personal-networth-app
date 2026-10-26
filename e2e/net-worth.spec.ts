@@ -55,7 +55,7 @@ test('history lists snapshots, edit updates the total, home shows latest', async
 	await expect(page.getByText('Net worth:')).toContainText('$1,500');
 
 	await page.goto('/');
-	await expect(page.locator('main').getByRole('link', { name: /Net Worth/ })).toContainText('$1,500');
+	await expect(page.locator('main').getByRole('link', { name: /net worth/i })).toContainText('$1,500');
 });
 
 test('net-worth-over-time chart renders once there are at least two snapshots', async ({ page }) => {

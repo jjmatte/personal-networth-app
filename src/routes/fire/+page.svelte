@@ -15,7 +15,7 @@
 	);
 </script>
 
-<main class="mx-auto max-w-3xl p-6">
+<main class="mx-auto max-w-5xl px-6 py-8">
 	<h1 class="mb-4 text-2xl font-semibold">FIRE</h1>
 
 	<section class="mb-6 rounded border p-4">

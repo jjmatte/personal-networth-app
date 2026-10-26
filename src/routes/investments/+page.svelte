@@ -61,8 +61,8 @@
 	}
 </script>
 
-<main class="mx-auto max-w-5xl p-6">
-	<div class="mx-auto max-w-3xl">
+<main class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
+	<div class="mx-auto max-w-5xl">
 		<h1 class="mb-4 text-2xl font-semibold">Dashboard</h1>
 
 		<div class="mb-6 flex items-center gap-6">

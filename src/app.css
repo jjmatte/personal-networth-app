@@ -1,1 +1,49 @@
 @import 'tailwindcss';
+
+@theme {
+	--color-ink: #14302a;
+	--color-ink-600: #1f4238;
+	--color-ink-500: #2c564a;
+	--color-canvas: #eef1ef;
+	--color-surface: #ffffff;
+	--color-brand: #1b6b4c;
+	--color-brand-bright: #2f9e6e;
+	--color-gain: #15794a;
+	--color-loss: #b2423a;
+	--color-muted: #5c6b64;
+	--color-line: #dfe5e1;
+
+	--font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+	html {
+		font-family: var(--font-sans);
+	}
+	body {
+		background-color: var(--color-canvas);
+		color: #16261f;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+}
+
+@utility tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Card surface — soft, low shadow, hair border. Hierarchy comes from padding/size, not more chrome. */
+@utility card {
+	background-color: var(--color-surface);
+	border: 1px solid var(--color-line);
+	border-radius: 1rem;
+	box-shadow: 0 1px 2px rgba(20, 48, 42, 0.04), 0 8px 24px -16px rgba(20, 48, 42, 0.18);
+}

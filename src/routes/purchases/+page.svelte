@@ -35,7 +35,7 @@
 	}
 </script>
 
-<main class="mx-auto max-w-4xl p-6">
+<main class="mx-auto max-w-6xl px-6 py-8">
 	<h1 class="mb-4 text-2xl font-semibold">Purchases</h1>
 
 	<input

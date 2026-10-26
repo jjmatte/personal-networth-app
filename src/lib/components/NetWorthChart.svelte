@@ -20,11 +20,12 @@
 							{
 								label: 'Net worth',
 								data: points.map((p) => ({ x: new Date(p.t).getTime(), y: p.value })),
-								borderColor: '#15803d',
-								backgroundColor: 'rgba(21, 128, 61, 0.1)',
+								borderColor: '#1b6b4c',
+								backgroundColor: 'rgba(27, 107, 76, 0.12)',
 								fill: true,
-								tension: 0.2,
-								pointRadius: 3
+								tension: 0.3,
+								pointRadius: 2,
+								borderWidth: 2
 							}
 						]
 					},

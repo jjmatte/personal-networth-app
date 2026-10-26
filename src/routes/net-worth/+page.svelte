@@ -5,7 +5,7 @@
 	const dateFmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 </script>
 
-<main class="mx-auto max-w-2xl p-6">
+<main class="mx-auto max-w-5xl px-6 py-8">
 	<div class="mb-4 flex items-center justify-between">
 		<h1 class="text-2xl font-semibold">Net worth history</h1>
 		<a href="/net-worth/new" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">New snapshot</a>
